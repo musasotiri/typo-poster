@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Word Drop Physics Refined</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+</head>
+
+<body>
+    <script>
+        let Engine = Matter.Engine,
+            World = Matter.World,
+            Bodies = Matter.Bodies;
+
+        let engine, world;
+        let ground, leftWall, rightWall;
+        let words = [];
+        let buffer = "";
+        let cursorVisible = true;
+        let lastBlink = 0;
+
+        function setup() {
+            createCanvas(windowWidth, windowHeight);
+            textAlign(CENTER, CENTER);
+            textSize(60);
+            engine = Engine.create();
+            world = engine.world;
+            world.gravity.y = 1;
+
+            // Tight boundaries
+            ground = Bodies.rectangle(width / 2, height, width, 40, { isStatic: true });
+            leftWall = Bodies.rectangle(0, height / 2, 40, height, { isStatic: true });
+            rightWall = Bodies.rectangle(width, height / 2, 40, height, { isStatic: true });
+            World.add(world, [ground, leftWall, rightWall]);
+        }
+
+        function draw() {
+            background(240);
+            Engine.update(engine);
+
+            for (let w of words) {
+                let pos = w.body.position;
+                let angle = w.body.angle;
+
+                // Rest detection
+                let speed = Math.hypot(w.body.velocity.x, w.body.velocity.y);
+                if (!w.resting && speed < 0.2) {
+                    w.resting = true;
+                    w.restTime = millis();
+                }
+
+                let displayAngle = angle;
+                if (w.resting) {
+                    let elapsed = (millis() - w.restTime) / 1000; // sec
+                    let maxDuration = 10; // wobble shorter
+                    if (elapsed < maxDuration) {
+                        let amplitude = map(elapsed, 0, maxDuration, 0.2, 0);
+                        displayAngle += sin(millis() / 200) * amplitude;
+                    }
+                }
+
+                push();
+                translate(pos.x, pos.y);
+                rotate(displayAngle);
+                fill(30);
+                noStroke();
+                text(w.text, 0, 0);
+                pop();
+            }
+
+            // Blink cursor
+            if (millis() - lastBlink > 500) {
+                cursorVisible = !cursorVisible;
+                lastBlink = millis();
+            }
+
+            fill(0);
+            textAlign(LEFT, CENTER);
+            let displayText = buffer + (cursorVisible ? "|" : "");
+            text(displayText, 50, 80);
+        }
+
+        function keyPressed() {
+            if (keyCode === BACKSPACE) {
+                buffer = buffer.slice(0, -1);
+                return false;
+            }
+            if (keyCode === ENTER || key === ' ') {
+                if (buffer.trim().length > 0) {
+                    dropWord(buffer);
+                    buffer = "";
+                }
+                return false;
+            }
+        }
+
+        function keyTyped() {
+            if (key.length === 1 && key !== " ") {
+                buffer += key;
+            }
+        }
+
+        function dropWord(word) {
+            let tw = textWidth(word);
+            let th = textSize();
+            let startX = random(100, width - 100);
+
+            let body = Bodies.rectangle(startX, -50, tw, th, {
+                restitution: 0.3,   // sikit bounce
+                friction: 0.2,      // rendah supaya boleh slide
+                frictionStatic: 0.1,// kurang melekat bila statik
+                density: 0.002,     // agak ringan
+                frictionAir: 0.01,  // ada sikit resistance
+                angle: random(-0.2, 0.2)
+            });
+
+            World.add(world, body);
+            words.push({ body: body, text: word, resting: false, restTime: null });
+        }
+
+    </script>
+</body>
+
+</html>
