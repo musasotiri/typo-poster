@@ -22,6 +22,11 @@
 </head>
 
 <body>
+
+
+    <input id="inputText" type="text" placeholder="type something here"
+        style="position:absolute; top:10px; left:10px; opacity:0; width:1px; height:1px;">
+
     <script>
         let Engine = Matter.Engine,
             World = Matter.World,
@@ -35,11 +40,12 @@
         let cursorVisible = true;
         let lastBlink = 0;
         let fontSize;
-        let fontSizeMultiplier = 0.2;
+        let fontSizeMultiplier = 0.15;
+        let input = document.getElementById('inputText');
 
         function setup() {
             createCanvas(windowWidth, windowHeight);
-            fontSize = height * fontSizeMultiplier; // 25% viewport height
+            fontSize = width * fontSizeMultiplier;
             textSize(fontSize);
             textFont('Georgia, "Times New Roman", serif');
             textAlign(LEFT, CENTER);
@@ -55,6 +61,16 @@
             rightWall = Bodies.rectangle(width, height / 2, 40, height, { isStatic: true });
             World.add(world, [ground, leftWall, rightWall]);
         }
+
+        // fokus input bila user tap canvas (mobile friendly)
+        function mousePressed() {
+            input.focus();
+        }
+
+        // sync input ke buffer
+        input.addEventListener('input', (e) => {
+            buffer = e.target.value;
+        });
 
         function draw() {
             background(240);
@@ -101,13 +117,13 @@
 
             fill(0);
             textAlign(LEFT, CENTER);
-            textSize(24); // cursor/input size = ~1.5rem
+            textSize(Math.max(16, height * 0.035));
             let cursorX = 50 + textWidth(buffer);
 
             // Show buffer / placeholder
             if (buffer.length === 0) {
                 fill(150); // gray placeholder
-                text("type something kat sini", 57, 40);
+                text("type something kat sini", 65, 40);
             } else {
                 fill(0);
                 text(buffer, 50, 40);
@@ -172,7 +188,7 @@
 
         function windowResized() {
             resizeCanvas(windowWidth, windowHeight);
-            fontSize = height * fontSizeMultiplier;
+            fontSize = width * fontSizeMultiplier;
             textSize(fontSize);
 
 
