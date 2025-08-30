@@ -24,8 +24,17 @@
 <body>
 
 
-    <input id="inputText" type="text" placeholder="type something here"
-        style="position:absolute; top:10px; left:10px; opacity:0; width:1px; height:1px;">
+    <input id="inputText" type="text" placeholder="type something here" style="
+           position:absolute;
+           top:10px;
+           left:10px;
+           width:1px;
+           height:30px; /* minimal height supaya mobile anggap valid */
+           opacity:0.05; /* hampir invisible */
+           background:transparent;
+           border:none;
+           z-index:1000;
+         ">
 
     <script>
         let Engine = Matter.Engine,
