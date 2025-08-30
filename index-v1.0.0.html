@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Word Drop Physics (Heavy Bounce Refined)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    <style>
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: sans-serif;
+        }
+
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+
+
+    <input id="inputText" type="text" placeholder="type something here" style="
+           position:absolute;
+           top:10px;
+           left:10px;
+           width:1px;
+           height:30px; /* minimal height supaya mobile anggap valid */
+           opacity:0.05; /* hampir invisible */
+           background:transparent;
+           border:none;
+           z-index:1000;
+         ">
+
+    <script>
+        let Engine = Matter.Engine,
+            World = Matter.World,
+            Bodies = Matter.Bodies,
+            Body = Matter.Body;
+
+        let engine, world;
+        let ground, leftWall, rightWall;
+        let words = [];
+        let buffer = "";
+        let cursorVisible = true;
+        let lastBlink = 0;
+        let fontSize;
+        let fontSizeMultiplier = 0.15;
+        let input = document.getElementById('inputText');
+
+        function setup() {
+            createCanvas(windowWidth, windowHeight);
+            fontSize = width * fontSizeMultiplier;
+            textSize(fontSize);
+            textFont('Georgia, "Times New Roman", serif');
+            textAlign(LEFT, CENTER);
+
+
+            engine = Engine.create();
+            world = engine.world;
+            world.gravity.y = 1.2; // heavier gravity
+
+            // Boundaries
+            ground = Bodies.rectangle(width / 2, height, width, 40, { isStatic: true });
+            leftWall = Bodies.rectangle(0, height / 2, 40, height, { isStatic: true });
+            rightWall = Bodies.rectangle(width, height / 2, 40, height, { isStatic: true });
+            World.add(world, [ground, leftWall, rightWall]);
+        }
+
+        // fokus input bila user tap canvas (mobile friendly)
+        function mousePressed() {
+            input.focus();
+        }
+
+        // sync input ke buffer
+        input.addEventListener('input', (e) => {
+            buffer = e.target.value;
+        });
+
+        function draw() {
+            background(240);
+            Engine.update(engine);
+
+            // Display dropped words
+            for (let w of words) {
+                let pos = w.body.position;
+                let angle = w.body.angle;
+                let maxAngle = PI / 6; // 30 darjah
+
+                // Clamp supaya tak lebih ground
+                if (pos.y > height - 20) {
+                    Body.setPosition(w.body, { x: pos.x, y: height - 20 });
+                    Body.setVelocity(w.body, { x: 0, y: 0 });
+                    Body.setAngularVelocity(w.body, 0);
+                }
+
+                if (angle > maxAngle) {
+                    Body.setAngle(w.body, maxAngle);
+                    Body.setAngularVelocity(w.body, 0);
+                }
+
+                if (angle < -maxAngle) {
+                    Body.setAngle(w.body, -maxAngle);
+                    Body.setAngularVelocity(w.body, 0);
+                }
+
+                push();
+                translate(pos.x, pos.y);
+                rotate(angle);
+                fill(w.color);
+                noStroke();
+                textAlign(CENTER, CENTER);
+                text(w.text, 0, 0);
+                pop();
+            }
+
+            // Blink cursor
+            if (millis() - lastBlink > 500) {
+                cursorVisible = !cursorVisible;
+                lastBlink = millis();
+            }
+
+            fill(0);
+            textAlign(LEFT, CENTER);
+            textSize(Math.max(16, height * 0.035));
+            let cursorX = 50 + textWidth(buffer);
+
+            // Show buffer / placeholder
+            if (buffer.length === 0) {
+                fill(150); // gray placeholder
+                text("type something kat sini", 65, 40);
+            } else {
+                fill(0);
+                text(buffer, 50, 40);
+            }
+
+            if (cursorVisible) {
+                text("|", cursorX, 40);
+            }
+
+            // Reset font size back for falling words
+            textSize(fontSize);
+
+        }
+
+        function keyPressed() {
+            if (keyCode === BACKSPACE) {
+                buffer = buffer.slice(0, -1);
+                return false;
+            }
+            if (keyCode === ENTER || key === ' ') {
+                if (buffer.trim().length > 0) {
+                    dropWord(buffer);
+                    buffer = "";
+                }
+                return false;
+            }
+        }
+
+        function keyTyped() {
+            if (key.length === 1 && key !== " ") {
+                buffer += key;
+            }
+        }
+
+        function dropWord(word) {
+            let tw = textWidth(word);
+            let th = fontSize;
+
+            // Drop from center ±5%
+            let offset = width * 0.2;
+            let startX = width / 2 + random(-offset, offset);
+            let startY = -100;
+
+            let body = Bodies.rectangle(startX, startY, tw, th * 0.65, {
+                restitution: 0.5, // very low bounce
+                friction: 0.8,
+                frictionStatic: 1.5,
+                density: 0.2, // heavier
+                angularDamping: 0.9,
+                angle: random(-0.5, 0.5),
+            });
+
+            // Very small random horizontal push
+            let forceX = random(-0.05, 0.05);
+            Body.applyForce(body, body.position, { x: forceX, y: 0 });
+
+            World.add(world, body);
+
+            let c = color(random(30, 70));
+            words.push({ body: body, text: word, color: c });
+        }
+
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+            fontSize = width * fontSizeMultiplier;
+            textSize(fontSize);
+
+
+            // Ground
+            Body.setPosition(ground, { x: width / 2, y: height - 20 });
+            Body.setVertices(ground, [
+                { x: 0, y: height - 20 },
+                { x: width, y: height - 20 },
+                { x: width, y: height },
+                { x: 0, y: height }
+            ]);
+
+            // Left wall
+            Body.setPosition(leftWall, { x: 20, y: height / 2 });
+            Body.setVertices(leftWall, [
+                { x: 0, y: 0 },
+                { x: 20, y: 0 },
+                { x: 20, y: height },
+                { x: 0, y: height }
+            ]);
+
+            // Right wall
+            Body.setPosition(rightWall, { x: width - 20, y: height / 2 });
+            Body.setVertices(rightWall, [
+                { x: width - 20, y: 0 },
+                { x: width, y: 0 },
+                { x: width, y: height },
+                { x: width - 20, y: height }
+            ]);
+        }
+    </script>
+</body>
+
+</html>
