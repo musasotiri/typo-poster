@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Word Drop Poster v1.2.0</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    <style>
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: sans-serif;
+            height: 100%;
+        }
+
+        #inputPanel {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+        }
+
+        #userInput {
+            width: 300px;
+            font-size: 1.5rem;
+            padding: 10px;
+        }
+
+        #generateBtn {
+            padding: 10px 20px;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="inputPanel">
+        <input type="text" id="userInput" maxlength="140" placeholder="type your message here" />
+        <button id="generateBtn">Generate Poster</button>
+    </div>
+
+    <script>
+        let Engine = Matter.Engine,
+            World = Matter.World,
+            Bodies = Matter.Bodies,
+            Body = Matter.Body;
+
+        let engine, world;
+        let ground, leftWall, rightWall;
+        let words = [];
+        let dropQueue = [];
+        let dropInterval = 250;
+        let lastDropTime = 0;
+
+        // Font sizes
+        let wordFontSize;
+        let inputFontSize = 1.5 * 16; // 1.5rem
+
+        let inputPanel = document.getElementById('inputPanel');
+        let userInput = document.getElementById('userInput');
+        let generateBtn = document.getElementById('generateBtn');
+
+        function setup() {
+            createCanvas(windowHeight * 0.707, windowHeight); // A4 ratio approx 1:1.414
+            wordFontSize = height * 0.15;
+            textSize(wordFontSize);
+            textFont('Georgia, "Times New Roman", serif');
+            textAlign(LEFT, CENTER);
+
+            engine = Engine.create();
+            world = engine.world;
+            world.gravity.y = 1.2;
+
+            // Boundaries
+            ground = Bodies.rectangle(width / 2, height, width, 40, { isStatic: true });
+            leftWall = Bodies.rectangle(0, height / 2, 40, height, { isStatic: true });
+            rightWall = Bodies.rectangle(width, height / 2, 40, height, { isStatic: true });
+            World.add(world, [ground, leftWall, rightWall]);
+
+            // Button
+            generateBtn.addEventListener('click', () => {
+                let textValue = userInput.value.trim();
+                if (textValue.length > 0) {
+                    inputPanel.style.display = 'none';
+                    startWordDrop(textValue);
+                }
+            });
+        }
+
+        function mousePressed() {
+            if (inputPanel.style.display !== 'none') {
+                userInput.focus();
+            }
+        }
+
+        function startWordDrop(text) {
+            let wordArray = text.split(' ');
+            dropQueue = [...wordArray].reverse(); // FILO
+        }
+
+        function draw() {
+            background(240);
+            Engine.update(engine);
+
+            // Drop words one by one
+            if (dropQueue.length > 0 && millis() - lastDropTime > dropInterval) {
+                let nextWord = dropQueue.shift();
+                dropWord(nextWord);
+                lastDropTime = millis();
+            }
+
+            // Render words
+            for (let w of words) {
+                let pos = w.body.position;
+                let angle = w.body.angle;
+                let maxAngle = PI / 6;
+
+                if (pos.y > height - 20) {
+                    Body.setPosition(w.body, { x: pos.x, y: height - 20 });
+                    Body.setVelocity(w.body, { x: 0, y: 0 });
+                    Body.setAngularVelocity(w.body, 0);
+                }
+
+                if (angle > maxAngle) Body.setAngle(w.body, maxAngle);
+                if (angle < -maxAngle) Body.setAngle(w.body, -maxAngle);
+
+                push();
+                translate(pos.x, pos.y);
+                rotate(angle);
+                fill(w.color);
+                noStroke();
+                textAlign(CENTER, CENTER);
+                textSize(wordFontSize);
+                text(w.text, 0, 0);
+                pop();
+            }
+        }
+
+        function dropWord(word) {
+            let tw = textWidth(word);
+            let th = wordFontSize;
+
+            let offset = width * 0.05;
+            let startX = width / 2 + random(-offset, offset);
+            let startY = -100;
+
+            let body = Bodies.rectangle(startX, startY, tw, th * 0.65, {
+                restitution: 0.2,
+                friction: 0.8,
+                frictionStatic: 1.5,
+                density: 0.2,
+                angularDamping: 0.9,
+                angle: random(-0.2, 0.2)
+            });
+
+            let forceX = random(-0.05, 0.05);
+            Body.applyForce(body, body.position, { x: forceX, y: 0 });
+
+            World.add(world, body);
+
+            words.push({ body: body, text: word, color: color(random(30, 70)) });
+        }
+
+        function windowResized() {
+            resizeCanvas(windowHeight * 0.707, windowHeight);
+            wordFontSize = height * 0.15;
+
+            Body.setPosition(ground, { x: width / 2, y: height - 20 });
+            Body.setPosition(leftWall, { x: 20, y: height / 2 });
+            Body.setPosition(rightWall, { x: width - 20, y: height / 2 });
+        }
+    </script>
+</body>
+
+</html>
