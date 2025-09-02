@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Poster Generator v1.7.16</title>
+    <title>Poster Generator v1.8.2</title>
     <style>
         body {
             margin: 0;
@@ -14,6 +14,7 @@
             height: 100vh;
             width: 100vw;
             background-color: #f8f9fa;
+            font-family: 'Inter', sans-serif;
         }
 
         .left {
@@ -60,6 +61,7 @@
             border-radius: 999px;
             border: 1px solid #ccc;
             box-sizing: border-box;
+            font-family: inherit;
         }
 
         #char-counter {
@@ -176,7 +178,20 @@
         let backgroundColor, wordColor, textColor;
 
         function setup() {
-            let canvas = createCanvas(595, 842 * 0.9); // Reduced height to 90%
+            let canvasWidth, canvasHeight;
+            const aspectRatio = Math.sqrt(2);
+
+            if (window.innerWidth > window.innerHeight) {
+                // Landscape mode
+                canvasHeight = window.innerHeight * 0.9;
+                canvasWidth = canvasHeight / aspectRatio;
+            } else {
+                // Portrait mode
+                canvasWidth = window.innerWidth * 0.9;
+                canvasHeight = canvasWidth * aspectRatio;
+            }
+
+            let canvas = createCanvas(canvasWidth, canvasHeight);
             canvas.parent('poster');
             engine = Engine.create();
             world = engine.world;
@@ -210,6 +225,32 @@
 
             // Set initial random high-contrast colors
             setHighContrastColors();
+        }
+
+        function windowResized() {
+            let canvasWidth, canvasHeight;
+            const aspectRatio = Math.sqrt(2);
+
+            if (window.innerWidth > window.innerHeight) {
+                // Landscape mode
+                canvasHeight = window.innerHeight * 0.9;
+                canvasWidth = canvasHeight / aspectRatio;
+            } else {
+                // Portrait mode
+                canvasWidth = window.innerWidth * 0.9;
+                canvasHeight = canvasWidth * aspectRatio;
+            }
+
+            resizeCanvas(canvasWidth, canvasHeight);
+            // Recreate walls and ground for new canvas dimensions
+            World.clear(world, false); // Clear only bodies, not engine
+            let ground = Bodies.rectangle(width / 2, height + 50, width, 100, { isStatic: true });
+            let leftWall = Bodies.rectangle(-50, height / 2, 100, height, { isStatic: true });
+            let rightWall = Bodies.rectangle(width + 50, height / 2, 100, height, { isStatic: true });
+            World.add(world, [ground, leftWall, rightWall]);
+            if (lastMessage.length > 0) {
+                createWords(lastMessage);
+            }
         }
 
         function updateCharCount() {
