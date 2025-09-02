@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Drop Poster v1.2.1</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    <style>
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: sans-serif;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        #posterContainer {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            padding: 1rem;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #e0e0e0;
+        }
+
+        #posterCanvas {
+            position: relative;
+            background-color: white;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            border: 1px solid #ddd;
+        }
+
+        #inputPanel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-width: 90vw;
+            box-sizing: border-box;
+        }
+
+        #userInput {
+            width: 280px;
+            max-width: 80vw;
+            font-size: 1.2rem;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        #userInput:focus {
+            border-color: #007bff;
+        }
+
+        #generateBtn {
+            padding: 12px 24px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+            min-width: 120px;
+        }
+
+        #generateBtn:hover {
+            background: #0056b3;
+        }
+
+        #generateBtn:active {
+            transform: translateY(1px);
+        }
+
+        canvas {
+            display: block;
+            background-color: white;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            border: 1rem solid white;
+        }
+
+        /* Mobile specific adjustments */
+        @media (max-width: 768px) {
+            #inputPanel {
+                padding: 20px 15px;
+                gap: 12px;
+                border-radius: 12px;
+                max-width: 85vw;
+            }
+
+            #userInput {
+                width: 100%;
+                max-width: none;
+                font-size: 1rem;
+                padding: 10px 12px;
+            }
+
+            #generateBtn {
+                font-size: 1rem;
+                padding: 10px 20px;
+                width: 100%;
+            }
+        }
+
+        /* Very small screens */
+        @media (max-width: 480px) {
+            #inputPanel {
+                padding: 15px 10px;
+                max-width: 90vw;
+            }
+
+            #userInput {
+                font-size: 0.9rem;
+                padding: 8px 10px;
+            }
+
+            #generateBtn {
+                font-size: 0.9rem;
+                padding: 8px 16px;
+            }
+        }
+
+        /* Landscape mobile */
+        @media (max-height: 500px) and (orientation: landscape) {
+            #inputPanel {
+                padding: 15px 20px;
+                gap: 10px;
+            }
+
+            #userInput {
+                font-size: 1rem;
+                padding: 8px 12px;
+            }
+
+            #generateBtn {
+                font-size: 1rem;
+                padding: 8px 16px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="posterContainer">
+        <div id="inputPanel">
+            <input type="text" id="userInput" maxlength="140" placeholder="Type your message here..." />
+            <button id="generateBtn">Generate Poster</button>
+        </div>
+    </div>
+
+    <script>
+        let Engine = Matter.Engine,
+            World = Matter.World,
+            Bodies = Matter.Bodies,
+            Body = Matter.Body;
+
+        let engine, world;
+        let ground, leftWall, rightWall;
+        let words = [];
+        let dropQueue = [];
+        let dropInterval = 250;
+        let lastDropTime = 0;
+
+        let wordFontSize;
+        let isMobile = window.innerWidth <= 768;
+
+        let inputPanel = document.getElementById('inputPanel');
+        let userInput = document.getElementById('userInput');
+        let generateBtn = document.getElementById('generateBtn');
+
+        function setup() {
+            let canvasWidth, canvasHeight;
+
+            if (isMobile) {
+                canvasWidth = windowWidth;
+                canvasHeight = windowHeight;
+            } else {
+                canvasWidth = windowHeight * 0.707;
+                canvasHeight = windowHeight;
+            }
+
+            posterCanvas = createCanvas(canvasWidth, canvasHeight);
+            posterCanvas.id('posterCanvas');
+            posterCanvas.parent(document.getElementById('posterContainer'));
+
+            wordFontSize = isMobile ? height * 0.08 : height * 0.12;
+            textSize(wordFontSize);
+            textFont('Georgia, "Times New Roman", serif');
+            textAlign(CENTER, CENTER);
+
+            engine = Engine.create();
+            world = engine.world;
+            world.gravity.y = isMobile ? 0.8 : 1.2;
+
+            let groundHeight = 40;
+            let wallWidth = 40;
+
+            ground = Bodies.rectangle(width / 2, height + groundHeight / 2, width, groundHeight, { isStatic: true });
+            leftWall = Bodies.rectangle(-wallWidth / 2, height / 2, wallWidth, height, { isStatic: true });
+            rightWall = Bodies.rectangle(width + wallWidth / 2, height / 2, wallWidth, height, { isStatic: true });
+            World.add(world, [ground, leftWall, rightWall]);
+
+            generateBtn.addEventListener('click', generatePoster);
+            userInput.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') {
+                    generatePoster();
+                }
+            });
+
+            if (isMobile) {
+                setTimeout(() => userInput.focus(), 100);
+            }
+        }
+
+        function generatePoster() {
+            let textValue = userInput.value.trim();
+            if (textValue.length > 0) {
+                inputPanel.style.display = 'none';
+                startWordDrop(textValue);
+            }
+        }
+
+        function startWordDrop(text) {
+            let wordArray = text.split(' ').filter(word => word.length > 0);
+            dropQueue = [...wordArray].reverse();
+        }
+
+        function draw() {
+            background(240);
+            Engine.update(engine);
+
+            // drop queue
+            if (dropQueue.length > 0 && millis() - lastDropTime > dropInterval) {
+                let nextWord = dropQueue.shift();
+                dropWord(nextWord);
+                lastDropTime = millis();
+            }
+
+            // simple collision check antara semua words
+            for (let i = 0; i < words.length; i++) {
+                for (let j = i + 1; j < words.length; j++) {
+                    let w1 = words[i];
+                    let w2 = words[j];
+                    let d = dist(w1.body.position.x, w1.body.position.y, w2.body.position.x, w2.body.position.y);
+                    if (d < w1.radius + w2.radius) {
+                        // push w1 keluar sikit
+                        let overlap = (w1.radius + w2.radius) - d;
+                        let dir = createVector(w1.body.position.x - w2.body.position.x, w1.body.position.y - w2.body.position.y);
+                        dir.normalize();
+                        dir.mult(overlap / 2);
+                        Body.translate(w1.body, { x: dir.x, y: dir.y });
+                        Body.translate(w2.body, { x: -dir.x, y: -dir.y });
+                    }
+                }
+            }
+
+            // draw words
+            for (let i = words.length - 1; i >= 0; i--) {
+                let w = words[i];
+                let pos = w.body.position;
+                let angle = w.body.angle;
+
+                let tw = textWidth(w.text);
+                let th = textAscent() + textDescent();
+
+                push();
+                translate(pos.x, pos.y);
+                rotate(angle);
+
+                rectMode(CENTER);
+                noStroke();
+                fill('#2176FF');
+                rect(0, 0, tw + 20, th + 10);
+
+                fill('#FFFFFF');
+                textSize(wordFontSize);
+                textAlign(CENTER, CENTER);
+                text(w.text, 0, 0);
+
+                pop();
+            }
+        }
+
+        function dropWord(word) {
+            let tw = textWidth(word);
+            let th = wordFontSize;
+
+            let startX = width / 2 + random(-50, 50);
+            let startY = -100;
+
+            let body = Bodies.circle(startX, startY, max(tw, th) / 2, {
+                restitution: 0.3,
+                friction: 0.8,
+                density: 0.2
+            });
+
+            World.add(world, body);
+
+            words.push({
+                body: body,
+                text: word,
+                radius: max(tw, th) / 2
+            });
+        }
+    </script>
+
+</body>
+
+</html>

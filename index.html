@@ -2,380 +2,384 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Word Drop Poster v1.2.1</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Poster Generator v1.7.16</title>
     <style>
-        body,
-        html {
+        body {
             margin: 0;
             padding: 0;
-            overflow: hidden;
-            font-family: sans-serif;
+            display: flex;
+            flex-direction: row;
             height: 100vh;
             width: 100vw;
+            background-color: #f8f9fa;
         }
 
-        #posterContainer {
-            width: 100vw;
-            height: 100vh;
-            position: relative;
-            padding: 1rem;
-            box-sizing: border-box;
+        .left {
+            flex: 1;
             display: flex;
             justify-content: center;
             align-items: center;
-            background-color: #e0e0e0;
+            padding: 0.5rem;
+            padding-top: 1rem;
         }
 
-        #posterCanvas {
-            position: relative;
-            background-color: white;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-            border: 1px solid #ddd;
+        .right {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
-        #inputPanel {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+        #input-panel {
+            width: 80%;
+            max-width: 400px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 15px;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 25px 30px;
-            border-radius: 15px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            z-index: 1000;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            max-width: 90vw;
+            gap: 1rem;
+        }
+
+        #input-and-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            width: 100%;
+        }
+
+        #input-container {
+            position: relative;
+            flex-grow: 1;
+        }
+
+        #message {
+            width: 100%;
+            padding: 0.75rem 3.5rem 0.75rem 0.75rem;
+            font-size: 1rem;
+            border-radius: 999px;
+            border: 1px solid #ccc;
             box-sizing: border-box;
         }
 
-        #userInput {
-            width: 280px;
-            max-width: 80vw;
-            font-size: 1.2rem;
-            padding: 12px 15px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            outline: none;
-            transition: border-color 0.3s ease;
-            box-sizing: border-box;
+        #char-counter {
+            width: 100%;
+            text-align: left;
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: -0.5rem;
         }
 
-        #userInput:focus {
-            border-color: #007bff;
-        }
-
-        #generateBtn {
-            padding: 12px 24px;
-            font-size: 1.1rem;
-            cursor: pointer;
-            background: #007bff;
-            color: white;
+        #generate-btn {
+            position: absolute;
+            right: 3px;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 0.5rem;
+            background: #2176FF;
+            color: #fff;
             border: none;
-            border-radius: 8px;
-            transition: background-color 0.3s ease;
-            min-width: 120px;
+            border-radius: 999px;
+            cursor: pointer;
+            font-size: 1rem;
+            line-height: 0;
         }
 
-        #generateBtn:hover {
-            background: #0056b3;
+        #refresh-btn {
+            background: none;
+            color: #343a40;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
         }
 
-        #generateBtn:active {
-            transform: translateY(1px);
+        #poster canvas {
+            border: 10px solid white;
+            box-shadow: 0 8px 16px rgba(52, 58, 64, 0.2);
         }
 
-        canvas {
-            display: block;
-            background-color: white;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-            border: 1rem solid white;
-        }
-
-        /* Mobile specific adjustments */
-        @media (max-width: 768px) {
-            #inputPanel {
-                padding: 20px 15px;
-                gap: 12px;
-                border-radius: 12px;
-                max-width: 85vw;
+        @media(max-width: 768px) {
+            body {
+                flex-direction: column;
             }
 
-            #userInput {
+            .left,
+            .right {
+                flex: none;
+                height: 50%;
                 width: 100%;
-                max-width: none;
-                font-size: 1rem;
-                padding: 10px 12px;
+                order: 2;
             }
 
-            #generateBtn {
-                font-size: 1rem;
-                padding: 10px 20px;
-                width: 100%;
-            }
-        }
-
-        /* Very small screens */
-        @media (max-width: 480px) {
-            #inputPanel {
-                padding: 15px 10px;
-                max-width: 90vw;
+            .right {
+                order: 1;
+                padding-top: 0.5rem;
             }
 
-            #userInput {
-                font-size: 0.9rem;
-                padding: 8px 10px;
-            }
-
-            #generateBtn {
-                font-size: 0.9rem;
-                padding: 8px 16px;
-            }
-        }
-
-        /* Landscape mobile */
-        @media (max-height: 500px) and (orientation: landscape) {
-            #inputPanel {
-                padding: 15px 20px;
-                gap: 10px;
-            }
-
-            #userInput {
-                font-size: 1rem;
-                padding: 8px 12px;
-            }
-
-            #generateBtn {
-                font-size: 1rem;
-                padding: 8px 16px;
+            #input-panel {
+                width: 90%;
             }
         }
     </style>
 </head>
 
 <body>
-
-    <div id="posterContainer">
-        <div id="inputPanel">
-            <input type="text" id="userInput" maxlength="140" placeholder="Type your message here..." />
-            <button id="generateBtn">Generate Poster</button>
+    <div class="left">
+        <div id="poster"></div>
+    </div>
+    <div class="right">
+        <div id="input-panel">
+            <div id="input-and-controls">
+                <div id="input-container">
+                    <input type="text" id="message" maxlength="60" placeholder="Type your message here..." />
+                    <button id="generate-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="lucide lucide-arrow-right">
+                            <path d="M5 12h14" />
+                            <path d="m12 5 7 7-7 7" />
+                        </svg>
+                    </button>
+                </div>
+                <button id="refresh-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="lucide lucide-rotate-ccw">
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                        <path d="M3 3v5h5" />
+                    </svg>
+                </button>
+            </div>
+            <div id="char-counter">0/60</div>
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <script>
         let Engine = Matter.Engine,
             World = Matter.World,
-            Bodies = Matter.Bodies,
-            Body = Matter.Body;
+            Bodies = Matter.Bodies;
 
         let engine, world;
-        let ground, leftWall, rightWall;
         let words = [];
-        let dropQueue = [];
-        let dropInterval = 250;
-        let lastDropTime = 0;
+        let inputField, generateButton, refreshButton, charCounter;
+        let started = false;
+        let lastMessage = "";
 
-        // Font sizes
-        let wordFontSize;
-        let isMobile = window.innerWidth <= 768;
+        // Separate colors into light and dark groups for high contrast
+        const lightColors = ['#f1faee', '#a8dadc'];
+        const darkColors = ['#e63946', '#457b9d', '#1d3557'];
+        const lightTextColor = '#1d3557';
+        const darkTextColor = '#f1faee';
 
-        let inputPanel = document.getElementById('inputPanel');
-        let userInput = document.getElementById('userInput');
-        let generateBtn = document.getElementById('generateBtn');
+        let backgroundColor, wordColor, textColor;
 
         function setup() {
-            // Calculate canvas size based on viewport
-            let canvasWidth, canvasHeight;
-
-            if (isMobile) {
-                // For mobile, use full viewport
-                canvasWidth = windowWidth;
-                canvasHeight = windowHeight;
-            } else {
-                // For desktop, maintain A4 ratio
-                canvasWidth = windowHeight * 0.707;
-                canvasHeight = windowHeight;
-            }
-
-            posterCanvas = createCanvas(canvasWidth, canvasHeight);
-            posterCanvas.id('posterCanvas');
-            posterCanvas.parent(document.getElementById('posterContainer'));
-
-            // Responsive font sizing
-            wordFontSize = isMobile ? height * 0.08 : height * 0.12;
-            textSize(wordFontSize);
-            textFont('Georgia, "Times New Roman", serif');
-            textAlign(LEFT, CENTER);
-
+            let canvas = createCanvas(595, 842 * 0.9); // Reduced height to 90%
+            canvas.parent('poster');
             engine = Engine.create();
             world = engine.world;
-            world.gravity.y = isMobile ? 0.8 : 1.2;
+            Engine.run(engine);
 
-            // Boundaries with proper positioning
-            let groundHeight = 40;
-            let wallWidth = 40;
-
-            ground = Bodies.rectangle(width / 2, height + groundHeight / 2, width, groundHeight, { isStatic: true });
-            leftWall = Bodies.rectangle(-wallWidth / 2, height / 2, wallWidth, height, { isStatic: true });
-            rightWall = Bodies.rectangle(width + wallWidth / 2, height / 2, wallWidth, height, { isStatic: true });
+            // Ground and walls
+            let ground = Bodies.rectangle(width / 2, height + 50, width, 100, {
+                isStatic: true
+            });
+            let leftWall = Bodies.rectangle(-50, height / 2, 100, height, {
+                isStatic: true
+            });
+            let rightWall = Bodies.rectangle(width + 50, height / 2, 100, height, {
+                isStatic: true
+            });
             World.add(world, [ground, leftWall, rightWall]);
 
-            // Button event listener
-            generateBtn.addEventListener('click', generatePoster);
+            inputField = document.getElementById("message");
+            generateButton = document.getElementById("generate-btn");
+            refreshButton = document.getElementById("refresh-btn");
+            charCounter = document.getElementById("char-counter");
 
-            // Enter key support
-            userInput.addEventListener('keypress', function (e) {
-                if (e.key === 'Enter') {
-                    generatePoster();
-                }
+            generateButton.addEventListener("click", generatePoster);
+            refreshButton.addEventListener("click", refreshPoster);
+            inputField.addEventListener("keypress", function (e) {
+                if (e.key === "Enter") generatePoster();
+            });
+            inputField.addEventListener("input", function () {
+                updateCharCount();
             });
 
-            // Auto-focus input on mobile
-            if (isMobile) {
-                setTimeout(() => userInput.focus(), 100);
-            }
+            // Set initial random high-contrast colors
+            setHighContrastColors();
+        }
+
+        function updateCharCount() {
+            charCounter.textContent = `${inputField.value.length}/60`;
         }
 
         function generatePoster() {
-            let textValue = userInput.value.trim();
-            if (textValue.length > 0) {
-                inputPanel.style.display = 'none';
-                startWordDrop(textValue);
+            lastMessage = inputField.value.trim();
+            if (lastMessage.length === 0) return;
+
+            createWords(lastMessage);
+            started = true;
+            inputField.value = "";
+            updateCharCount();
+        }
+
+        function refreshPoster() {
+            if (lastMessage.length > 0) {
+                createWords(lastMessage);
+                started = true;
             }
         }
 
-        function mousePressed() {
-            if (inputPanel.style.display !== 'none') {
-                userInput.focus();
+        function setHighContrastColors() {
+            const isLightTheme = random() > 0.5;
+            if (isLightTheme) {
+                backgroundColor = random(lightColors);
+                wordColor = random(darkColors);
+                textColor = darkTextColor;
+            } else {
+                backgroundColor = random(darkColors);
+                wordColor = random(lightColors);
+                textColor = lightTextColor;
             }
         }
 
-        // Add touch support
-        function touchStarted() {
-            if (inputPanel.style.display !== 'none') {
-                userInput.focus();
+        function createWords(msg) {
+            // Remove previous word bodies from the world
+            if (words.length > 0) {
+                for (let i = 0; i < words.length; i++) {
+                    World.remove(world, words[i].body);
+                }
             }
-            return false; // Prevent default
-        }
+            words = []; // Clear the visual array for new words
 
-        function startWordDrop(text) {
-            let wordArray = text.split(' ').filter(word => word.length > 0);
-            dropQueue = [...wordArray].reverse(); // FILO
+            // Select new random colors
+            setHighContrastColors();
+
+            // New rule: Add a space after punctuation that is not followed by a space,
+            // then split by whitespace. This correctly separates words like "hello,world"
+            const processedMsg = msg.replace(/([.,!?;:])(?=\S)/g, '$1 ');
+            let parts = processedMsg.trim().split(/\s+/).filter(Boolean);
+
+            if (parts.length === 0) return;
+
+            // New rule: Merge two words based on a random condition if total words > 7
+            if (parts.length > 7) {
+                let mergedParts = [];
+                let i = 0;
+                while (i < parts.length) {
+                    // 50% chance of merging
+                    const shouldMerge = random() < 0.5;
+
+                    if (shouldMerge && i + 1 < parts.length) {
+                        mergedParts.push(parts[i] + ' ' + parts[i + 1]);
+                        i += 2; // Skip the next word
+                    } else {
+                        mergedParts.push(parts[i]);
+                        i += 1; // Move to the next word
+                    }
+                }
+                parts = mergedParts;
+            }
+
+            // Convert all words to uppercase
+            parts = parts.map(word => word.toUpperCase());
+
+            let longestWord = parts.reduce((longest, current) => current.length > longest.length ? current : longest, "");
+
+            let baseFontSize = height * 0.35;
+            let targetTextWidth = width * 0.9;
+
+            textSize(baseFontSize);
+            let tempTextWidth = textWidth(longestWord);
+
+            let adjustedFontSize = baseFontSize;
+
+            if (tempTextWidth > targetTextWidth) {
+                adjustedFontSize = baseFontSize * (targetTextWidth / tempTextWidth);
+            }
+
+            // New rule: Reduce font size by 50% if there are 7 or more words.
+            if (parts.length >= 7) {
+                adjustedFontSize *= 0.6; // 100% - 50% = 50%
+            } else {
+                adjustedFontSize *= 0.9; // Otherwise, use the previous 25% reduction
+            }
+
+            adjustedFontSize = max(adjustedFontSize, 40);
+
+            // FILO order → reverse
+            parts.reverse().forEach((w, i) => {
+                let x = width / 2 + random(-50, 50);
+                let y = -200 - i * (adjustedFontSize * 1.5);
+                words.push(new Word(w, x, y, adjustedFontSize, wordColor, textColor));
+            });
         }
 
         function draw() {
-            background(240);
-            Engine.update(engine);
+            background(backgroundColor);
 
-            // Drop words one by one
-            if (dropQueue.length > 0 && millis() - lastDropTime > dropInterval) {
-                let nextWord = dropQueue.shift();
-                dropWord(nextWord);
-                lastDropTime = millis();
+            if (started) {
+                for (let w of words) {
+                    w.show();
+                }
+            }
+        }
+
+        class Word {
+            constructor(word, x, y, fontSize, color, textColor) {
+                this.word = word;
+                this.fontSize = fontSize;
+                this.color = color;
+                this.textColor = textColor;
+                textSize(this.fontSize);
+                this.textWidth = textWidth(word);
+
+                // Visual padding for the background rectangle
+                const visualPaddingX = 30; // 15px left & right
+                const visualPaddingY = 10; // 10px top & 0px bottom
+
+                // Invisible physics blocks are 2px bigger on all sides
+                const physicsPadding = 4; // 2px on each side
+
+                const blockWidth = this.textWidth + visualPaddingX + physicsPadding;
+                const blockHeight = this.fontSize + visualPaddingY + physicsPadding;
+
+                this.body = Bodies.rectangle(x, y, blockWidth, blockHeight, {
+                    restitution: 0.2,
+                    friction: 0.8,
+                    angle: random(-PI / 4, PI / 4)
+                });
+                World.add(world, this.body);
             }
 
-            // Render words
-            for (let i = words.length - 1; i >= 0; i--) {
-                let w = words[i];
-                let pos = w.body.position;
-                let angle = w.body.angle;
-                let maxAngle = PI / 6;
-
-                // Keep words within bounds
-                if (pos.y > height - 30) {
-                    Body.setPosition(w.body, { x: pos.x, y: height - 30 });
-                    Body.setVelocity(w.body, { x: w.body.velocity.x * 0.5, y: 0 });
-                    Body.setAngularVelocity(w.body, 0);
-                }
-
-                // Limit rotation
-                if (angle > maxAngle) Body.setAngle(w.body, maxAngle);
-                if (angle < -maxAngle) Body.setAngle(w.body, -maxAngle);
-
-                // Remove words that are too far off screen
-                if (pos.y > height + 200) {
-                    World.remove(world, w.body);
-                    words.splice(i, 1);
-                    continue;
-                }
+            show() {
+                let pos = this.body.position;
+                this.body.angle = constrain(this.body.angle, -PI / 4, PI / 4);
+                let angle = this.body.angle;
 
                 push();
                 translate(pos.x, pos.y);
                 rotate(angle);
-                fill(w.color);
+
+                rectMode(CENTER);
                 noStroke();
+                fill(this.color);
+
+                // Updated: Visual rectangle with padding
+                const visualPaddingX = 30;
+                const visualPaddingY = 10;
+                rect(0, 0, this.textWidth + visualPaddingX, this.fontSize + visualPaddingY);
+
+                fill(this.textColor); // Use the dynamically selected text color
                 textAlign(CENTER, CENTER);
-                textSize(wordFontSize);
-                text(w.text, 0, 0);
+                textSize(this.fontSize);
+                text(this.word, 0, 5);
+
                 pop();
             }
-        }
-
-        function dropWord(word) {
-            let tw = textWidth(word);
-            let th = wordFontSize;
-
-            let offset = width * (isMobile ? 0.1 : 0.05);
-            let startX = width / 2 + random(-offset, offset);
-            let startY = -100;
-
-            let body = Bodies.rectangle(startX, startY, tw, th * 0.65, {
-                restitution: 0.3,
-                friction: 0.8,
-                frictionStatic: 1.5,
-                density: isMobile ? 0.1 : 0.2,
-                angularDamping: 0.9,
-                angle: random(-0.2, 0.2)
-            });
-
-            let forceX = random(-0.03, 0.03);
-            Body.applyForce(body, body.position, { x: forceX, y: 0 });
-
-            World.add(world, body);
-
-            words.push({
-                body: body,
-                text: word,
-                color: color(random(30, 70))
-            });
-        }
-
-        function windowResized() {
-            isMobile = window.innerWidth <= 768;
-
-            let canvasWidth, canvasHeight;
-
-            if (isMobile) {
-                canvasWidth = windowWidth;
-                canvasHeight = windowHeight;
-            } else {
-                canvasWidth = windowHeight * 0.707;
-                canvasHeight = windowHeight;
-            }
-
-            resizeCanvas(canvasWidth, canvasHeight);
-            wordFontSize = isMobile ? height * 0.08 : height * 0.12;
-
-            // Update physics boundaries
-            let groundHeight = 40;
-            let wallWidth = 40;
-
-            Body.setPosition(ground, { x: width / 2, y: height + groundHeight / 2 });
-            Body.setPosition(leftWall, { x: -wallWidth / 2, y: height / 2 });
-            Body.setPosition(rightWall, { x: width + wallWidth / 2, y: height / 2 });
-
-            // Update wall dimensions
-            Body.scale(ground, width / ground.bounds.max.x - ground.bounds.min.x, 1);
-            Body.scale(leftWall, 1, height / (leftWall.bounds.max.y - leftWall.bounds.min.y));
-            Body.scale(rightWall, 1, height / (rightWall.bounds.max.y - rightWall.bounds.min.y));
         }
     </script>
 </body>
