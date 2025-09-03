@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Poster Generator v3.8</title>
+    <title>Poster Generator v3.9</title>
     <style>
         body {
             margin: 0;
@@ -281,66 +281,21 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
-    <!-- Firebase SDK Imports -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, addDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // Firebase Global Variables provided by the environment
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : undefined;
-
-        let db, auth;
-        let firebaseReady = false;
-
-        async function initApp() {
-            if (Object.keys(firebaseConfig).length === 0) {
-                console.warn("Firebase configuration is missing or empty. The app will run in read-only mode.");
-                checkUrlAndLoadPoster(); // Still check for an ID to load a static poster
-                return;
-            }
-
-            try {
-                const app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
-
-                onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        firebaseReady = true;
-                        console.log("Firebase initialized and authenticated.");
-                        checkUrlAndLoadPoster();
-                    } else {
-                        // Sign in anonymously if not already signed in
-                        if (initialAuthToken) {
-                            await signInWithCustomToken(auth, initialAuthToken);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
-                    }
-                });
-            } catch (error) {
-                console.error("Firebase initialization failed:", error);
-            }
+    <script>
+        // Seeded random number generator
+        let seed = 0;
+        function seedRandom(s) {
+            seed = s;
         }
 
-        // Expose Firebase and other functions to the global scope
-        window.initApp = initApp;
-        window.getDb = () => db;
-        window.getAuth = () => auth;
-        window.getAppId = () => appId;
-        window.getInitialAuthToken = () => initialAuthToken;
-        window.getFirebaseConfig = () => firebaseConfig;
-        window.addDoc = addDoc;
-        window.collection = collection;
-        window.serverTimestamp = serverTimestamp;
-        window.doc = doc;
-        window.getDoc = getDoc;
-        window.getFirebaseReady = () => firebaseReady;
-    </script>
-    <script>
+        function seededRandom(max, min) {
+            max = max || 1;
+            min = min || 0;
+            seed = (seed * 9301 + 49297) % 233280;
+            let rnd = seed / 233280;
+            return min + rnd * (max - min);
+        }
+
         let Engine = Matter.Engine,
             World = Matter.World,
             Bodies = Matter.Bodies;
@@ -357,13 +312,12 @@
         const lightTextColor = '#1d3557';
         const darkTextColor = '#f1faee';
 
-        // Initialize color variables with a default value to prevent errors on startup
         let backgroundColor = '#f8f9fa';
         let wordColor = '#1d3557';
         let textColor = '#f1faee';
 
         // This is the main p5.js setup function, automatically called when the library is ready
-        async function setup() {
+        function setup() {
             let canvasWidth, canvasHeight;
             const aspectRatio = Math.sqrt(2);
 
@@ -384,9 +338,15 @@
             world = engine.world;
             Engine.run(engine);
 
-            let ground = Bodies.rectangle(width / 2, height + 50, width, 100, { isStatic: true });
-            let leftWall = Bodies.rectangle(-50, height / 2, 100, height, { isStatic: true });
-            let rightWall = Bodies.rectangle(width + 50, height / 2, 100, height, { isStatic: true });
+            let ground = Bodies.rectangle(width / 2, height + 50, width, 100, {
+                isStatic: true
+            });
+            let leftWall = Bodies.rectangle(-50, height / 2, 100, height, {
+                isStatic: true
+            });
+            let rightWall = Bodies.rectangle(width + 50, height / 2, 100, height, {
+                isStatic: true
+            });
             World.add(world, [ground, leftWall, rightWall]);
 
             inputPanel = document.getElementById("input-panel");
@@ -413,65 +373,61 @@
                 updateButtonState();
             });
 
-            window.initApp();
+            checkUrlAndLoadPoster();
         }
 
-        async function checkUrlAndLoadPoster() {
+        function checkUrlAndLoadPoster() {
             const urlParams = new URLSearchParams(window.location.search);
-            const posterId = urlParams.get('id');
+            const message = urlParams.get('msg');
+            const author = urlParams.get('author');
+            const bgColor = urlParams.get('bg');
+            const wordColorParam = urlParams.get('word');
+            const textColorParam = urlParams.get('text');
+            const seedParam = urlParams.get('seed');
 
-            if (posterId) {
-                // Hide the input panel and other UI for the shared view
+            if (message) {
                 inputPanel.classList.add('hidden');
-                await loadPosterById(posterId);
+
+                const colors = {
+                    backgroundColor: bgColor,
+                    wordColor: wordColorParam,
+                    textColor: textColorParam
+                };
+
+                loadPosterFromUrl(message, author, colors, seedParam);
             } else {
-                // Show default poster
                 loadDefaultPoster();
             }
         }
 
-        async function loadPosterById(id) {
-            if (!getFirebaseReady()) {
-                console.warn("Firebase not ready. Cannot load poster from database.");
-                lastMessage = "Service not ready.";
+        function loadPosterFromUrl(message, author, colors, seedParam) {
+            lastMessage = message;
+
+            if (!colors.backgroundColor || !colors.wordColor || !colors.textColor) {
                 setHighContrastColors();
-                createWords(lastMessage, lastColors);
-                started = true;
-                return;
+            } else {
+                lastColors = {
+                    backgroundColor: '#' + colors.backgroundColor,
+                    wordColor: '#' + colors.wordColor,
+                    textColor: '#' + colors.textColor
+                };
             }
 
-            const db = getDb();
-            const appId = getAppId();
-
-            try {
-                const posterDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'posters', id);
-                const docSnap = await getDoc(posterDocRef);
-
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    lastMessage = data.message;
-                    setHighContrastColors();
-                    createWords(lastMessage, lastColors);
-                    started = true;
-                } else {
-                    console.error("No such document!");
-                    lastMessage = "404: Poster not found!";
-                    setHighContrastColors();
-                    createWords(lastMessage, lastColors);
-                    started = true;
-                }
-            } catch (e) {
-                console.error("Error fetching document:", e);
-                lastMessage = "Error loading poster.";
-                setHighContrastColors();
-                createWords(lastMessage, lastColors);
-                started = true;
+            // Use the seed from the URL if available
+            if (seedParam) {
+                seedRandom(parseInt(seedParam, 10));
+            } else {
+                seedRandom(Math.random() * 233280 | 0);
             }
+
+            createWords(lastMessage, lastColors);
+            started = true;
         }
 
         function loadDefaultPoster() {
             lastMessage = "1% better, everyday";
             setHighContrastColors();
+            seedRandom(Math.random() * 233280 | 0);
             createWords(lastMessage, lastColors);
             started = true;
         }
@@ -493,9 +449,15 @@
 
             resizeCanvas(canvasWidth, canvasHeight);
             World.clear(world, false);
-            let ground = Bodies.rectangle(width / 2, height + 50, width, 100, { isStatic: true });
-            let leftWall = Bodies.rectangle(-50, height / 2, 100, height, { isStatic: true });
-            let rightWall = Bodies.rectangle(width + 50, height / 2, 100, height, { isStatic: true });
+            let ground = Bodies.rectangle(width / 2, height + 50, width, 100, {
+                isStatic: true
+            });
+            let leftWall = Bodies.rectangle(-50, height / 2, 100, height, {
+                isStatic: true
+            });
+            let rightWall = Bodies.rectangle(width + 50, height / 2, 100, height, {
+                isStatic: true
+            });
             World.add(world, [ground, leftWall, rightWall]);
             if (lastMessage.length > 0) {
                 createWords(lastMessage, lastColors);
@@ -515,6 +477,7 @@
             if (lastMessage.length === 0) return;
 
             setHighContrastColors();
+            seedRandom(Math.random() * 233280 | 0);
             createWords(lastMessage, lastColors);
             started = true;
             linkPanel.classList.add('hidden');
@@ -523,46 +486,33 @@
 
         function refreshPoster() {
             if (lastMessage.length > 0) {
+                // Generate a new seed for a different simulation
+                seedRandom(Math.random() * 233280 | 0);
                 createWords(lastMessage, lastColors);
                 started = true;
             }
         }
 
-        async function saveAndSharePoster() {
+        function saveAndSharePoster() {
             const message = messageInput.value.trim();
             if (!message) {
                 showToast("Please generate a poster first!");
                 return;
             }
 
-            if (!getFirebaseReady()) {
-                showToast("Service not ready, please wait.");
-                console.warn("Firebase not ready. Cannot save poster.");
-                return;
-            }
+            const author = authorNameInput.value.trim();
 
-            const author = authorNameInput.value.trim() || "Anonymous";
-            const db = getDb();
-            const appId = getAppId();
+            // Encode colors into the URL
+            const bgColor = lastColors.backgroundColor.substring(1);
+            const wordColorParam = lastColors.wordColor.substring(1);
+            const textColorParam = lastColors.textColor.substring(1);
+            const currentSeed = seed;
 
-            try {
-                // Firestore path: /artifacts/{appId}/public/data/posters
-                const postersCol = collection(db, 'artifacts', appId, 'public', 'data', 'posters');
-                const docRef = await addDoc(postersCol, {
-                    message: message,
-                    author: author,
-                    createdAt: serverTimestamp()
-                });
-
-                const shareUrl = `${window.location.origin}${window.location.pathname}?id=${docRef.id}`;
-                linkDisplay.textContent = shareUrl;
-                linkPanel.classList.remove('hidden');
-                shareButton.hidden = true;
-                showToast("Link saved and ready to share!");
-            } catch (e) {
-                console.error("Error adding document: ", e);
-                showToast("Failed to share poster. Please try again.");
-            }
+            const shareUrl = `${window.location.origin}${window.location.pathname}?msg=${encodeURIComponent(message)}&author=${encodeURIComponent(author)}&bg=${bgColor}&word=${wordColorParam}&text=${textColorParam}&seed=${currentSeed}`;
+            linkDisplay.textContent = shareUrl;
+            linkPanel.classList.remove('hidden');
+            shareButton.hidden = true;
+            showToast("Link saved and ready to share!");
         }
 
         function copyLink() {
@@ -584,7 +534,7 @@
         }
 
         function setHighContrastColors() {
-            const isLightTheme = random() > 0.5;
+            const isLightTheme = seededRandom() > 0.5;
             if (isLightTheme) {
                 backgroundColor = random(lightColors);
                 wordColor = random(darkColors);
@@ -601,7 +551,6 @@
             };
         }
 
-        // 🔥 New font size calculation
         function calculateFontSize(parts) {
             let baseFontSize = height * 0.25;
 
@@ -651,7 +600,7 @@
                 let mergedParts = [];
                 let i = 0;
                 while (i < parts.length) {
-                    const shouldMerge = random() < 0.5;
+                    const shouldMerge = seededRandom() < 0.5;
                     if (shouldMerge && i + 1 < parts.length) {
                         mergedParts.push(parts[i] + ' ' + parts[i + 1]);
                         i += 2;
@@ -668,7 +617,7 @@
             let adjustedFontSize = calculateFontSize(parts);
 
             parts.reverse().forEach((w, i) => {
-                let x = width / 2 + random(-50, 50);
+                let x = width / 2 + seededRandom(-50, 50);
                 let y = -200 - i * (adjustedFontSize * 1.5);
                 words.push(new Word(w, x, y, adjustedFontSize, wordColor, textColor));
             });
@@ -703,7 +652,7 @@
                 this.body = Bodies.rectangle(x, y, blockWidth, blockHeight, {
                     restitution: 0.2,
                     friction: 0.8,
-                    angle: random(-PI / 4, PI / 4)
+                    angle: seededRandom(-PI / 4, PI / 4)
                 });
                 World.add(world, this.body);
             }
