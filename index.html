@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Poster Generator v2.1.0</title>
+    <title>Poster Generator v2.1.3</title>
     <style>
         body {
             margin: 0;
@@ -119,27 +119,26 @@
 
         #logo-svg {
             position: absolute;
-            top: 3px;
-            left: 10px;
-            width: 7%;
+            top: 10px;
+            left: 7px;
+            width: 5%;
             height: auto;
             z-index: 10;
         }
 
         #share-btn {
-            background-color: #00b894;
+            background-color: #2176FF;
             color: white;
             padding: 0.5rem 1rem;
             border: none;
             border-radius: 999px;
             cursor: pointer;
             font-size: 1rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             transition: background-color 0.3s ease;
         }
 
         #share-btn:hover {
-            background-color: #00a082;
+            background-color: #1d62e0;
         }
 
         #toast-message {
@@ -234,7 +233,7 @@
                 </div>
             </div>
             <div id="char-counter">0/60</div>
-            <button id="share-btn" hidden>Share Link</button>
+            <button id="share-btn" hidden>Share Poster</button>
         </div>
     </div>
     <div id="toast-message"></div>
@@ -316,11 +315,17 @@
                     const encodedData = window.location.hash.substring(1);
                     const decodedJsonString = decodeURIComponent(encodedData);
                     const data = JSON.parse(decodedJsonString);
-                    lastMessage = data.message;
-                    lastColors = data.colors;
-                    createWords(lastMessage, lastColors);
-                    started = true;
-                    shareButton.hidden = false;
+
+                    if (data && data.message && data.message.length > 0) {
+                        lastMessage = data.message;
+                        lastColors = data.colors;
+                        createWords(lastMessage, lastColors);
+                        started = true;
+                        shareButton.hidden = false;
+                    } else {
+                        // Bug Fix: If URL message is empty, load default poster
+                        loadDefaultPoster();
+                    }
                 } catch (e) {
                     console.error("Failed to decode URL data:", e);
                     // Fallback to default poster if URL is invalid
@@ -393,6 +398,11 @@
         }
 
         function sharePoster() {
+            if (!lastMessage || lastMessage.length === 0) {
+                showToast("Please generate a poster first!");
+                return;
+            }
+
             const data = {
                 message: lastMessage,
                 colors: lastColors
