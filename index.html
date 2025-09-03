@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Poster Generator v1.8.8</title>
+    <title>Poster Generator v1.9.0</title>
     <style>
         body {
             margin: 0;
@@ -32,14 +32,6 @@
             display: flex;
             justify-content: center;
             align-items: center;
-        }
-
-        #logo-k-blue {
-            position: absolute;
-            top: 1rem;
-            left: 1rem;
-            width: 37.5px;
-            height: auto;
         }
 
         #input-panel {
@@ -129,7 +121,7 @@
                 flex: none;
                 height: 50%;
                 order: 1;
-                padding-top: 9rem;
+                padding-top: 4.5rem;
             }
 
             .right {
@@ -137,13 +129,6 @@
                 height: 35%;
                 order: 2;
                 padding-bottom: 0.5rem;
-            }
-
-            #logo-k-blue {
-                left: 50%;
-                top: 2rem;
-                transform: translateX(-50%);
-                width: 25px;
             }
 
             #input-panel {
@@ -154,15 +139,6 @@
 </head>
 
 <body>
-    <svg id="logo-k-blue" xmlns="http://www.w3.org/2000/svg" width="218.001" height="370.016"
-        viewBox="0 0 218.001 370.016">
-        <path id="Path_1" data-name="Path 1"
-            d="M0,0V28.291H189.71V246.369H84.911v.655L30.257,301.64V246.369H1.966v83.6H1.927l.039.039h0l-.039,40.008L97.283,274.66H218V0Z"
-            fill="#2176ff" />
-        <path id="Path_2" data-name="Path 2"
-            d="M.54,16.7V153.182h31.1V95.251l50.3,57.931h42.822L61.246,81.376,116.17,16.7H78.436L31.644,72.434V16.7Z"
-            transform="translate(1.541 47.667)" fill="#2176ff" />
-    </svg>
     <div class="left">
         <div id="poster">
             <button id="refresh-btn">
@@ -207,7 +183,6 @@
         let started = false;
         let lastMessage = "";
 
-        // Separate colors into light and dark groups for high contrast
         const lightColors = ['#f1faee', '#a8dadc'];
         const darkColors = ['#e63946', '#457b9d', '#1d3557'];
         const lightTextColor = '#1d3557';
@@ -220,11 +195,9 @@
             const aspectRatio = Math.sqrt(2);
 
             if (window.innerWidth > window.innerHeight) {
-                // Landscape mode
                 canvasHeight = window.innerHeight * 0.9;
                 canvasWidth = canvasHeight / aspectRatio;
             } else {
-                // Portrait mode
                 canvasWidth = window.innerWidth * 0.9;
                 canvasHeight = canvasWidth * aspectRatio;
             }
@@ -235,16 +208,9 @@
             world = engine.world;
             Engine.run(engine);
 
-            // Ground and walls
-            let ground = Bodies.rectangle(width / 2, height + 50, width, 100, {
-                isStatic: true
-            });
-            let leftWall = Bodies.rectangle(-50, height / 2, 100, height, {
-                isStatic: true
-            });
-            let rightWall = Bodies.rectangle(width + 50, height / 2, 100, height, {
-                isStatic: true
-            });
+            let ground = Bodies.rectangle(width / 2, height + 50, width, 100, { isStatic: true });
+            let leftWall = Bodies.rectangle(-50, height / 2, 100, height, { isStatic: true });
+            let rightWall = Bodies.rectangle(width + 50, height / 2, 100, height, { isStatic: true });
             World.add(world, [ground, leftWall, rightWall]);
 
             inputField = document.getElementById("message");
@@ -261,8 +227,12 @@
                 updateCharCount();
             });
 
-            // Set initial random high-contrast colors
             setHighContrastColors();
+
+            // 🔥 Auto-load default poster
+            lastMessage = "1% better, everyday";
+            createWords(lastMessage);
+            started = true;
         }
 
         function windowResized() {
@@ -270,18 +240,15 @@
             const aspectRatio = Math.sqrt(2);
 
             if (window.innerWidth > window.innerHeight) {
-                // Landscape mode
                 canvasHeight = window.innerHeight * 0.9;
                 canvasWidth = canvasHeight / aspectRatio;
             } else {
-                // Portrait mode
                 canvasWidth = window.innerWidth * 0.9;
                 canvasHeight = canvasWidth * aspectRatio;
             }
 
             resizeCanvas(canvasWidth, canvasHeight);
-            // Recreate walls and ground for new canvas dimensions
-            World.clear(world, false); // Clear only bodies, not engine
+            World.clear(world, false);
             let ground = Bodies.rectangle(width / 2, height + 50, width, 100, { isStatic: true });
             let leftWall = Bodies.rectangle(-50, height / 2, 100, height, { isStatic: true });
             let rightWall = Bodies.rectangle(width + 50, height / 2, 100, height, { isStatic: true });
@@ -325,71 +292,65 @@
             }
         }
 
+        // 🔥 New font size calculation
+        function calculateFontSize(parts) {
+            let baseFontSize = height * 0.25;
+
+            textSize(baseFontSize);
+            let longestWord = parts.reduce((a, b) => a.length > b.length ? a : b, "");
+            let maxWidth = width * 0.85;
+            let longestWidth = textWidth(longestWord);
+
+            let adjusted = baseFontSize;
+            if (longestWidth > maxWidth) {
+                adjusted *= (maxWidth / longestWidth);
+            }
+
+            let scalingFactor = 1 - (Math.log(parts.length) / 10);
+            scalingFactor = constrain(scalingFactor, 0.5, 1);
+            adjusted *= scalingFactor;
+
+            let minSize = height * 0.05;
+            adjusted = max(adjusted, minSize);
+
+            return adjusted;
+        }
+
         function createWords(msg) {
-            // Remove previous word bodies from the world
             if (words.length > 0) {
                 for (let i = 0; i < words.length; i++) {
                     World.remove(world, words[i].body);
                 }
             }
-            words = []; // Clear the visual array for new words
+            words = [];
 
-            // Select new random colors
             setHighContrastColors();
 
-            // New rule: Add a space after punctuation that is not followed by a space,
-            // then split by whitespace. This correctly separates words like "hello,world"
             const processedMsg = msg.replace(/([.,!?;:])(?=\S)/g, '$1 ');
             let parts = processedMsg.trim().split(/\s+/).filter(Boolean);
 
             if (parts.length === 0) return;
 
-            // New rule: Merge two words based on a random condition if total words > 7
             if (parts.length > 7) {
                 let mergedParts = [];
                 let i = 0;
                 while (i < parts.length) {
-                    // 50% chance of merging
                     const shouldMerge = random() < 0.5;
-
                     if (shouldMerge && i + 1 < parts.length) {
                         mergedParts.push(parts[i] + ' ' + parts[i + 1]);
-                        i += 2; // Skip the next word
+                        i += 2;
                     } else {
                         mergedParts.push(parts[i]);
-                        i += 1; // Move to the next word
+                        i += 1;
                     }
                 }
                 parts = mergedParts;
             }
 
-            // Convert all words to uppercase
             parts = parts.map(word => word.toUpperCase());
 
-            let longestWord = parts.reduce((longest, current) => current.length > longest.length ? current : longest, "");
+            let adjustedFontSize = calculateFontSize(parts);
 
-            let baseFontSize = height * 0.35;
-            let targetTextWidth = width * 0.9;
-
-            textSize(baseFontSize);
-            let tempTextWidth = textWidth(longestWord);
-
-            let adjustedFontSize = baseFontSize;
-
-            if (tempTextWidth > targetTextWidth) {
-                adjustedFontSize = baseFontSize * (targetTextWidth / tempTextWidth);
-            }
-
-            // New rule: Reduce font size by 50% if there are 7 or more words.
-            if (parts.length >= 7) {
-                adjustedFontSize *= 0.6; // 100% - 50% = 50%
-            } else {
-                adjustedFontSize *= 0.9; // Otherwise, use the previous 25% reduction
-            }
-
-            adjustedFontSize = max(adjustedFontSize, 40);
-
-            // FILO order → reverse
             parts.reverse().forEach((w, i) => {
                 let x = width / 2 + random(-50, 50);
                 let y = -200 - i * (adjustedFontSize * 1.5);
@@ -416,12 +377,9 @@
                 textSize(this.fontSize);
                 this.textWidth = textWidth(word);
 
-                // Visual padding for the background rectangle
-                const visualPaddingX = 30; // 15px left & right
-                const visualPaddingY = 10; // 10px top & 0px bottom
-
-                // Invisible physics blocks are 2px bigger on all sides
-                const physicsPadding = 4; // 2px on each side
+                const visualPaddingX = 30;
+                const visualPaddingY = 10;
+                const physicsPadding = 4;
 
                 const blockWidth = this.textWidth + visualPaddingX + physicsPadding;
                 const blockHeight = this.fontSize + visualPaddingY + physicsPadding;
@@ -447,12 +405,11 @@
                 noStroke();
                 fill(this.color);
 
-                // Updated: Visual rectangle with padding
                 const visualPaddingX = 30;
                 const visualPaddingY = 10;
                 rect(0, 0, this.textWidth + visualPaddingX, this.fontSize + visualPaddingY);
 
-                fill(this.textColor); // Use the dynamically selected text color
+                fill(this.textColor);
                 textAlign(CENTER, CENTER);
                 textSize(this.fontSize);
                 text(this.word, 0, 5);
