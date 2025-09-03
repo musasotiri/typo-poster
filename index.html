@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Poster Generator v3.6</title>
+    <title>Poster Generator v3.8</title>
     <style>
         body {
             margin: 0;
@@ -296,6 +296,12 @@
         let firebaseReady = false;
 
         async function initApp() {
+            if (Object.keys(firebaseConfig).length === 0) {
+                console.warn("Firebase configuration is missing or empty. The app will run in read-only mode.");
+                checkUrlAndLoadPoster(); // Still check for an ID to load a static poster
+                return;
+            }
+
             try {
                 const app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
@@ -425,12 +431,18 @@
         }
 
         async function loadPosterById(id) {
-            const db = getDb();
-            const appId = getAppId();
             if (!getFirebaseReady()) {
-                console.log("Firebase not ready. Cannot load poster.");
+                console.warn("Firebase not ready. Cannot load poster from database.");
+                lastMessage = "Service not ready.";
+                setHighContrastColors();
+                createWords(lastMessage, lastColors);
+                started = true;
                 return;
             }
+
+            const db = getDb();
+            const appId = getAppId();
+
             try {
                 const posterDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'posters', id);
                 const docSnap = await getDoc(posterDocRef);
@@ -523,14 +535,15 @@
                 return;
             }
 
+            if (!getFirebaseReady()) {
+                showToast("Service not ready, please wait.");
+                console.warn("Firebase not ready. Cannot save poster.");
+                return;
+            }
+
             const author = authorNameInput.value.trim() || "Anonymous";
             const db = getDb();
             const appId = getAppId();
-
-            if (!getFirebaseReady()) {
-                showToast("Service not ready, please wait...");
-                return;
-            }
 
             try {
                 // Firestore path: /artifacts/{appId}/public/data/posters
