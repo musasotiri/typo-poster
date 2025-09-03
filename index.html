@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Poster Generator v3.9</title>
+    <title>Poster Generator v2.1.3</title>
     <style>
         body {
             margin: 0;
@@ -43,10 +43,6 @@
             gap: 1rem;
         }
 
-        .hidden {
-            display: none !important;
-        }
-
         #input-and-controls {
             display: flex;
             align-items: center;
@@ -54,7 +50,7 @@
             width: 100%;
         }
 
-        #message-container {
+        #input-container {
             position: relative;
             flex-grow: 1;
         }
@@ -73,8 +69,9 @@
             width: 100%;
             text-align: left;
             font-size: 0.8rem;
-            color: #666;
+            color: #a3a3a3;
             margin-top: -0.5rem;
+            margin-left: 1.5rem;
         }
 
         #generate-btn {
@@ -98,17 +95,32 @@
         }
 
         #refresh-btn {
-            background-color: rgba(255, 255, 255, 0.35);
+            background-color: white;
             -webkit-backdrop-filter: blur(5px);
             backdrop-filter: blur(5px);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
+            border-radius: 0;
             padding: 0.5rem;
             cursor: pointer;
-            color: #343a40;
+            color: #2176FF;
             position: absolute;
-            bottom: 17px;
-            right: 12px;
+            bottom: 4px;
+            right: -44px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        #share-btn {
+            background-color: white;
+            -webkit-backdrop-filter: blur(5px);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 0;
+            padding: 0.5rem;
+            cursor: pointer;
+            color: #2176FF;
+            position: absolute;
+            bottom: 51px;
+            right: -44px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
@@ -128,53 +140,7 @@
             width: 5%;
             height: auto;
             z-index: 10;
-        }
-
-        #share-btn,
-        #copy-btn {
-            background-color: #2176FF;
-            color: white;
-            padding: 0.5rem 1rem;
-            border: none;
-            border-radius: 999px;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: background-color 0.3s ease;
-        }
-
-        #share-btn:hover,
-        #copy-btn:hover {
-            background-color: #1d62e0;
-        }
-
-        #link-panel {
-            width: 100%;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-top: 1rem;
-        }
-
-        #link-display {
-            flex-grow: 1;
-            padding: 0.5rem;
-            border: 1px solid #ccc;
-            border-radius: 999px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            background-color: #fff;
-            font-size: 0.9rem;
-        }
-
-        #author-name {
-            width: 100%;
-            padding: 0.75rem;
-            font-size: 1rem;
-            border-radius: 999px;
-            border: 1px solid #ccc;
-            box-sizing: border-box;
-            font-family: inherit;
+            visibility: hidden;
         }
 
         #toast-message {
@@ -199,24 +165,33 @@
         @media(max-width: 768px) {
             body {
                 flex-direction: column;
-                justify-content: center;
+                justify-content: flex-start;
                 align-items: center;
-                padding: 1rem;
             }
 
             .left {
                 flex: 2;
-                padding: 0;
+                padding: 1rem;
             }
 
             .right {
                 flex: 1;
-                padding-bottom: 0;
+                padding-bottom: 0.5rem;
                 width: 90%;
             }
 
             #input-panel {
                 width: 100%;
+            }
+
+            #refresh-btn {
+                bottom: -43px;
+                right: 0;
+            }
+
+            #share-btn {
+                bottom: -43px;
+                right: 44px;
             }
         }
     </style>
@@ -244,6 +219,15 @@
                     </g>
                 </g>
             </svg>
+            <button id="share-btn" hidden>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="lucide lucide-share-icon lucide-share">
+                    <path d="M12 2v13" />
+                    <path d="m16 6-4-4-4 4" />
+                    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                </svg>
+            </button>
             <button id="refresh-btn">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -256,9 +240,8 @@
     </div>
     <div class="right">
         <div id="input-panel">
-            <input type="text" id="author-name" maxlength="50" placeholder="Enter your name (optional)" />
             <div id="input-and-controls">
-                <div id="message-container">
+                <div id="input-container">
                     <input type="text" id="message" maxlength="60" placeholder="Type your message here..." />
                     <button id="generate-btn" disabled>
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -271,11 +254,6 @@
                 </div>
             </div>
             <div id="char-counter">0/60</div>
-            <button id="share-btn" hidden>Share Poster</button>
-            <div id="link-panel" class="hidden">
-                <div id="link-display"></div>
-                <button id="copy-btn">Copy Link</button>
-            </div>
         </div>
     </div>
     <div id="toast-message"></div>
@@ -283,27 +261,13 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <script>
-        // Seeded random number generator
-        let seed = 0;
-        function seedRandom(s) {
-            seed = s;
-        }
-
-        function seededRandom(max, min) {
-            max = max || 1;
-            min = min || 0;
-            seed = (seed * 9301 + 49297) % 233280;
-            let rnd = seed / 233280;
-            return min + rnd * (max - min);
-        }
-
         let Engine = Matter.Engine,
             World = Matter.World,
             Bodies = Matter.Bodies;
 
         let engine, world;
         let words = [];
-        let inputPanel, authorNameInput, messageInput, generateButton, refreshButton, charCounter, shareButton, toastMessage, linkPanel, linkDisplay, copyButton;
+        let inputField, generateButton, refreshButton, charCounter, shareButton, toastMessage;
         let started = false;
         let lastMessage = "";
         let lastColors = {};
@@ -313,11 +277,13 @@
         const lightTextColor = '#1d3557';
         const darkTextColor = '#f1faee';
 
-        let backgroundColor = '#f8f9fa';
-        let wordColor = '#1d3557';
-        let textColor = '#f1faee';
+        let backgroundColor, wordColor, textColor;
 
-        // This is the main p5.js setup function, automatically called when the library is ready
+        window.onload = function () {
+            setup();
+            checkUrlAndLoadPoster();
+        }
+
         function setup() {
             let canvasWidth, canvasHeight;
             const aspectRatio = Math.sqrt(2);
@@ -339,96 +305,60 @@
             world = engine.world;
             Engine.run(engine);
 
-            let ground = Bodies.rectangle(width / 2, height + 50, width, 100, {
-                isStatic: true
-            });
-            let leftWall = Bodies.rectangle(-50, height / 2, 100, height, {
-                isStatic: true
-            });
-            let rightWall = Bodies.rectangle(width + 50, height / 2, 100, height, {
-                isStatic: true
-            });
+            let ground = Bodies.rectangle(width / 2, height + 50, width, 100, { isStatic: true });
+            let leftWall = Bodies.rectangle(-50, height / 2, 100, height, { isStatic: true });
+            let rightWall = Bodies.rectangle(width + 50, height / 2, 100, height, { isStatic: true });
             World.add(world, [ground, leftWall, rightWall]);
 
-            inputPanel = document.getElementById("input-panel");
-            authorNameInput = document.getElementById("author-name");
-            messageInput = document.getElementById("message");
+            inputField = document.getElementById("message");
             generateButton = document.getElementById("generate-btn");
             refreshButton = document.getElementById("refresh-btn");
             charCounter = document.getElementById("char-counter");
             shareButton = document.getElementById("share-btn");
             toastMessage = document.getElementById("toast-message");
-            linkPanel = document.getElementById("link-panel");
-            linkDisplay = document.getElementById("link-display");
-            copyButton = document.getElementById("copy-btn");
 
             generateButton.addEventListener("click", generatePoster);
             refreshButton.addEventListener("click", refreshPoster);
-            shareButton.addEventListener("click", saveAndSharePoster);
-            copyButton.addEventListener("click", copyLink);
-            messageInput.addEventListener("keypress", function (e) {
+            shareButton.addEventListener("click", sharePoster);
+            inputField.addEventListener("keypress", function (e) {
                 if (e.key === "Enter") generatePoster();
             });
-            messageInput.addEventListener("input", function () {
+            inputField.addEventListener("input", function () {
                 updateCharCount();
                 updateButtonState();
             });
-
-            checkUrlAndLoadPoster();
         }
 
         function checkUrlAndLoadPoster() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const message = urlParams.get('msg');
-            const author = urlParams.get('author');
-            const bgColor = urlParams.get('bg');
-            const wordColorParam = urlParams.get('word');
-            const textColorParam = urlParams.get('text');
-            const seedParam = urlParams.get('seed');
+            if (window.location.hash) {
+                try {
+                    const encodedData = window.location.hash.substring(1);
+                    const decodedJsonString = decodeURIComponent(encodedData);
+                    const data = JSON.parse(decodedJsonString);
 
-            if (message) {
-                inputPanel.classList.add('hidden');
-
-                const colors = {
-                    backgroundColor: bgColor,
-                    wordColor: wordColorParam,
-                    textColor: textColorParam
-                };
-
-                loadPosterFromUrl(message, author, colors, seedParam);
+                    if (data && data.message && data.message.length > 0) {
+                        lastMessage = data.message;
+                        lastColors = data.colors;
+                        createWords(lastMessage, lastColors);
+                        started = true;
+                        shareButton.hidden = false;
+                    } else {
+                        // Bug Fix: If URL message is empty, load default poster
+                        loadDefaultPoster();
+                    }
+                } catch (e) {
+                    console.error("Failed to decode URL data:", e);
+                    // Fallback to default poster if URL is invalid
+                    loadDefaultPoster();
+                }
             } else {
                 loadDefaultPoster();
             }
         }
 
-        function loadPosterFromUrl(message, author, colors, seedParam) {
-            lastMessage = message;
-
-            if (!colors.backgroundColor || !colors.wordColor || !colors.textColor) {
-                setHighContrastColors();
-            } else {
-                lastColors = {
-                    backgroundColor: '#' + colors.backgroundColor,
-                    wordColor: '#' + colors.wordColor,
-                    textColor: '#' + colors.textColor
-                };
-            }
-
-            // Use the seed from the URL if available
-            if (seedParam) {
-                seedRandom(parseInt(seedParam, 10));
-            } else {
-                seedRandom(Math.random() * 233280 | 0);
-            }
-
-            createWords(lastMessage, lastColors);
-            started = true;
-        }
-
         function loadDefaultPoster() {
             lastMessage = "1% better, everyday";
             setHighContrastColors();
-            seedRandom(Math.random() * 233280 | 0);
             createWords(lastMessage, lastColors);
             started = true;
         }
@@ -450,15 +380,9 @@
 
             resizeCanvas(canvasWidth, canvasHeight);
             World.clear(world, false);
-            let ground = Bodies.rectangle(width / 2, height + 50, width, 100, {
-                isStatic: true
-            });
-            let leftWall = Bodies.rectangle(-50, height / 2, 100, height, {
-                isStatic: true
-            });
-            let rightWall = Bodies.rectangle(width + 50, height / 2, 100, height, {
-                isStatic: true
-            });
+            let ground = Bodies.rectangle(width / 2, height + 50, width, 100, { isStatic: true });
+            let leftWall = Bodies.rectangle(-50, height / 2, 100, height, { isStatic: true });
+            let rightWall = Bodies.rectangle(width + 50, height / 2, 100, height, { isStatic: true });
             World.add(world, [ground, leftWall, rightWall]);
             if (lastMessage.length > 0) {
                 createWords(lastMessage, lastColors);
@@ -466,60 +390,53 @@
         }
 
         function updateCharCount() {
-            charCounter.textContent = `${messageInput.value.length}/60`;
+            charCounter.textContent = `${inputField.value.length}/60`;
+            if (inputField.value.length === 0) {
+                shareButton.hidden = true;
+            }
         }
 
         function updateButtonState() {
-            generateButton.disabled = messageInput.value.trim().length === 0;
+            generateButton.disabled = inputField.value.trim().length === 0;
         }
 
         function generatePoster() {
-            lastMessage = messageInput.value.trim();
+            lastMessage = inputField.value.trim();
             if (lastMessage.length === 0) return;
 
             setHighContrastColors();
-            seedRandom(Math.random() * 233280 | 0);
             createWords(lastMessage, lastColors);
             started = true;
-            linkPanel.classList.add('hidden');
+            // inputField.value = "";
+            updateCharCount();
+            updateButtonState();
             shareButton.hidden = false;
         }
 
         function refreshPoster() {
             if (lastMessage.length > 0) {
-                // Generate a new seed for a different simulation
-                seedRandom(Math.random() * 233280 | 0);
+                setHighContrastColors();
                 createWords(lastMessage, lastColors);
                 started = true;
             }
         }
 
-        function saveAndSharePoster() {
-            const message = messageInput.value.trim();
-            if (!message) {
+        function sharePoster() {
+            if (!lastMessage || lastMessage.length === 0) {
                 showToast("Please generate a poster first!");
                 return;
             }
 
-            const author = authorNameInput.value.trim();
+            const data = {
+                message: lastMessage,
+                colors: lastColors
+            };
+            const jsonString = JSON.stringify(data);
+            const encodedData = encodeURIComponent(jsonString);
+            const shareUrl = window.location.origin + window.location.pathname + '#' + encodedData;
 
-            // Encode colors into the URL
-            const bgColor = lastColors.backgroundColor.substring(1);
-            const wordColorParam = lastColors.wordColor.substring(1);
-            const textColorParam = lastColors.textColor.substring(1);
-            const currentSeed = seed;
-
-            const shareUrl = `${window.location.origin}${window.location.pathname}?msg=${encodeURIComponent(message)}&author=${encodeURIComponent(author)}&bg=${bgColor}&word=${wordColorParam}&text=${textColorParam}&seed=${currentSeed}`;
-            linkDisplay.textContent = shareUrl;
-            linkPanel.classList.remove('hidden');
-            shareButton.hidden = true;
-            showToast("Link saved and ready to share!");
-        }
-
-        function copyLink() {
-            const linkToCopy = linkDisplay.textContent;
-            navigator.clipboard.writeText(linkToCopy).then(() => {
-                showToast("Link copied to clipboard!");
+            navigator.clipboard.writeText(shareUrl).then(() => {
+                showToast("Link copied!");
             }).catch(err => {
                 console.error("Failed to copy link:", err);
                 showToast("Failed to copy link.");
@@ -535,7 +452,7 @@
         }
 
         function setHighContrastColors() {
-            const isLightTheme = seededRandom() > 0.5;
+            const isLightTheme = random() > 0.5;
             if (isLightTheme) {
                 backgroundColor = random(lightColors);
                 wordColor = random(darkColors);
@@ -552,6 +469,7 @@
             };
         }
 
+        // 🔥 New font size calculation
         function calculateFontSize(parts) {
             let baseFontSize = height * 0.25;
 
@@ -576,11 +494,6 @@
         }
 
         function createWords(msg, colors) {
-            if (!colors) {
-                setHighContrastColors();
-                colors = lastColors;
-            }
-
             if (words.length > 0) {
                 for (let i = 0; i < words.length; i++) {
                     World.remove(world, words[i].body);
@@ -601,7 +514,7 @@
                 let mergedParts = [];
                 let i = 0;
                 while (i < parts.length) {
-                    const shouldMerge = seededRandom() < 0.5;
+                    const shouldMerge = random() < 0.5;
                     if (shouldMerge && i + 1 < parts.length) {
                         mergedParts.push(parts[i] + ' ' + parts[i + 1]);
                         i += 2;
@@ -618,7 +531,7 @@
             let adjustedFontSize = calculateFontSize(parts);
 
             parts.reverse().forEach((w, i) => {
-                let x = width / 2 + seededRandom(-50, 50);
+                let x = width / 2 + random(-50, 50);
                 let y = -200 - i * (adjustedFontSize * 1.5);
                 words.push(new Word(w, x, y, adjustedFontSize, wordColor, textColor));
             });
@@ -653,7 +566,7 @@
                 this.body = Bodies.rectangle(x, y, blockWidth, blockHeight, {
                     restitution: 0.2,
                     friction: 0.8,
-                    angle: seededRandom(-PI / 4, PI / 4)
+                    angle: random(-PI / 4, PI / 4)
                 });
                 World.add(world, this.body);
             }
