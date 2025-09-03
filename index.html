@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Poster Generator v1.9.0</title>
+    <title>Poster Generator v1.9.2</title>
     <style>
         body {
             margin: 0;
@@ -88,6 +88,11 @@
             line-height: 0;
         }
 
+        #generate-btn[disabled] {
+            background: #ced4da;
+            cursor: not-allowed;
+        }
+
         #refresh-btn {
             background-color: rgba(255, 255, 255, 0.35);
             -webkit-backdrop-filter: blur(5px);
@@ -115,19 +120,17 @@
         @media(max-width: 768px) {
             body {
                 flex-direction: column;
+                justify-content: flex-start;
+                align-items: center;
             }
 
             .left {
-                flex: none;
-                height: 50%;
-                order: 1;
-                padding-top: 4.5rem;
+                flex: 2;
+                padding: 1rem;
             }
 
             .right {
-                flex: none;
-                height: 35%;
-                order: 2;
+                flex: 1;
                 padding-bottom: 0.5rem;
             }
 
@@ -156,7 +159,7 @@
             <div id="input-and-controls">
                 <div id="input-container">
                     <input type="text" id="message" maxlength="60" placeholder="Type your message here..." />
-                    <button id="generate-btn">
+                    <button id="generate-btn" disabled>
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                             class="lucide lucide-arrow-right">
@@ -227,6 +230,7 @@
             });
             inputField.addEventListener("input", function () {
                 updateCharCount();
+                updateButtonState();
             });
 
             setHighContrastColors();
@@ -266,6 +270,10 @@
             charCounter.textContent = `${inputField.value.length}/60`;
         }
 
+        function updateButtonState() {
+            generateButton.disabled = inputField.value.trim().length === 0;
+        }
+
         function generatePoster() {
             lastMessage = inputField.value.trim();
             if (lastMessage.length === 0) return;
@@ -274,6 +282,7 @@
             started = true;
             inputField.value = "";
             updateCharCount();
+            updateButtonState();
         }
 
         function refreshPoster() {
