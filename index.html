@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Poster Generator v1.9.0</title>
+    <title>Poster Generator v1.9.1</title>
     <style>
         body {
             margin: 0;
@@ -121,7 +121,7 @@
                 flex: none;
                 height: 50%;
                 order: 1;
-                padding-top: 4.5rem;
+                padding-top: 1rem;
             }
 
             .right {
@@ -191,15 +191,23 @@
         let backgroundColor, wordColor, textColor;
 
         function setup() {
-            let canvasWidth, canvasHeight;
-            const aspectRatio = Math.sqrt(2);
+            // New logic to ensure the canvas always fits within the viewport
+            const targetRatio = Math.sqrt(2); // A4 portrait ratio
+            const margin = 0.9;
 
-            if (window.innerWidth > window.innerHeight) {
-                canvasHeight = window.innerHeight * 0.9;
-                canvasWidth = canvasHeight / aspectRatio;
+            const viewportWidth = window.innerWidth * margin;
+            const viewportHeight = window.innerHeight * margin;
+
+            let canvasWidth, canvasHeight;
+
+            if ((viewportWidth / viewportHeight) > (1 / targetRatio)) {
+                // Viewport is wider than the poster ratio, limit by height
+                canvasHeight = viewportHeight;
+                canvasWidth = canvasHeight / targetRatio;
             } else {
-                canvasWidth = window.innerWidth * 0.9;
-                canvasHeight = canvasWidth * aspectRatio;
+                // Viewport is taller or same aspect as the poster, limit by width
+                canvasWidth = viewportWidth;
+                canvasHeight = canvasWidth * targetRatio;
             }
 
             let canvas = createCanvas(canvasWidth, canvasHeight);
@@ -236,15 +244,23 @@
         }
 
         function windowResized() {
-            let canvasWidth, canvasHeight;
-            const aspectRatio = Math.sqrt(2);
+            // New logic to ensure the canvas always fits within the viewport
+            const targetRatio = Math.sqrt(2); // A4 portrait ratio
+            const margin = 0.9;
 
-            if (window.innerWidth > window.innerHeight) {
-                canvasHeight = window.innerHeight * 0.9;
-                canvasWidth = canvasHeight / aspectRatio;
+            const viewportWidth = window.innerWidth * margin;
+            const viewportHeight = window.innerHeight * margin;
+
+            let canvasWidth, canvasHeight;
+
+            if ((viewportWidth / viewportHeight) > (1 / targetRatio)) {
+                // Viewport is wider than the poster ratio, limit by height
+                canvasHeight = viewportHeight;
+                canvasWidth = canvasHeight / targetRatio;
             } else {
-                canvasWidth = window.innerWidth * 0.9;
-                canvasHeight = canvasWidth * aspectRatio;
+                // Viewport is taller or same aspect as the poster, limit by width
+                canvasWidth = viewportWidth;
+                canvasHeight = canvasWidth * targetRatio;
             }
 
             resizeCanvas(canvasWidth, canvasHeight);
