@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Poster Generator v1.9.3</title>
+    <title>Poster Generator v1.9.5</title>
     <style>
         body {
             margin: 0;
@@ -35,7 +35,7 @@
         }
 
         #input-panel {
-            width: 90%;
+            width: 100%;
             max-width: 400px;
             display: flex;
             flex-direction: column;
@@ -132,6 +132,7 @@
             .right {
                 flex: 1;
                 padding-bottom: 0.5rem;
+                width: 90%;
             }
 
             #input-panel {
@@ -198,12 +199,14 @@
             const aspectRatio = Math.sqrt(2);
 
             let viewportH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+            let viewportW = window.visualViewport ? window.visualViewport.width : window.innerWidth;
 
-            if (window.innerWidth > viewportH) {
+
+            if (viewportW > viewportH) {
                 canvasHeight = viewportH * 0.9;
                 canvasWidth = canvasHeight / aspectRatio;
             } else {
-                canvasWidth = window.innerWidth * 0.9;
+                canvasWidth = viewportW * 0.9;
                 canvasHeight = canvasWidth * aspectRatio;
             }
 
@@ -246,12 +249,13 @@
             const aspectRatio = Math.sqrt(2);
 
             let viewportH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+            let viewportW = window.visualViewport ? window.visualViewport.width : window.innerWidth;
 
-            if (window.innerWidth > viewportH) {
+            if (viewportW > viewportH) {
                 canvasHeight = viewportH * 0.9;
                 canvasWidth = canvasHeight / aspectRatio;
             } else {
-                canvasWidth = window.innerWidth * 0.9;
+                canvasWidth = viewportW * 0.9;
                 canvasHeight = canvasWidth * aspectRatio;
             }
 
