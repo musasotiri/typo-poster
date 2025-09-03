@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Poster Generator v2.0.9</title>
+    <title>Poster Generator v2.1.0</title>
     <style>
         body {
             margin: 0;
@@ -126,6 +126,41 @@
             z-index: 10;
         }
 
+        #share-btn {
+            background-color: #00b894;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 999px;
+            cursor: pointer;
+            font-size: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s ease;
+        }
+
+        #share-btn:hover {
+            background-color: #00a082;
+        }
+
+        #toast-message {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(52, 58, 64, 0.85);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 999px;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        #toast-message.show {
+            opacity: 1;
+        }
+
         @media(max-width: 768px) {
             body {
                 flex-direction: column;
@@ -199,8 +234,10 @@
                 </div>
             </div>
             <div id="char-counter">0/60</div>
+            <button id="share-btn" hidden>Share Link</button>
         </div>
     </div>
+    <div id="toast-message"></div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
@@ -211,9 +248,10 @@
 
         let engine, world;
         let words = [];
-        let inputField, generateButton, refreshButton, charCounter;
+        let inputField, generateButton, refreshButton, charCounter, shareButton, toastMessage;
         let started = false;
         let lastMessage = "";
+        let lastColors = {};
 
         const lightColors = ['#f1faee', '#a8dadc'];
         const darkColors = ['#e63946', '#457b9d', '#1d3557'];
@@ -222,13 +260,17 @@
 
         let backgroundColor, wordColor, textColor;
 
+        window.onload = function () {
+            setup();
+            checkUrlAndLoadPoster();
+        }
+
         function setup() {
             let canvasWidth, canvasHeight;
             const aspectRatio = Math.sqrt(2);
 
             let viewportH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
             let viewportW = window.visualViewport ? window.visualViewport.width : window.innerWidth;
-
 
             if (viewportW > viewportH) {
                 canvasHeight = viewportH * 0.9;
@@ -253,9 +295,12 @@
             generateButton = document.getElementById("generate-btn");
             refreshButton = document.getElementById("refresh-btn");
             charCounter = document.getElementById("char-counter");
+            shareButton = document.getElementById("share-btn");
+            toastMessage = document.getElementById("toast-message");
 
             generateButton.addEventListener("click", generatePoster);
             refreshButton.addEventListener("click", refreshPoster);
+            shareButton.addEventListener("click", sharePoster);
             inputField.addEventListener("keypress", function (e) {
                 if (e.key === "Enter") generatePoster();
             });
@@ -263,12 +308,33 @@
                 updateCharCount();
                 updateButtonState();
             });
+        }
 
-            setHighContrastColors();
+        function checkUrlAndLoadPoster() {
+            if (window.location.hash) {
+                try {
+                    const encodedData = window.location.hash.substring(1);
+                    const decodedJsonString = decodeURIComponent(encodedData);
+                    const data = JSON.parse(decodedJsonString);
+                    lastMessage = data.message;
+                    lastColors = data.colors;
+                    createWords(lastMessage, lastColors);
+                    started = true;
+                    shareButton.hidden = false;
+                } catch (e) {
+                    console.error("Failed to decode URL data:", e);
+                    // Fallback to default poster if URL is invalid
+                    loadDefaultPoster();
+                }
+            } else {
+                loadDefaultPoster();
+            }
+        }
 
-            // 🔥 Auto-load default poster
+        function loadDefaultPoster() {
             lastMessage = "1% better, everyday";
-            createWords(lastMessage);
+            setHighContrastColors();
+            createWords(lastMessage, lastColors);
             started = true;
         }
 
@@ -294,7 +360,7 @@
             let rightWall = Bodies.rectangle(width + 50, height / 2, 100, height, { isStatic: true });
             World.add(world, [ground, leftWall, rightWall]);
             if (lastMessage.length > 0) {
-                createWords(lastMessage);
+                createWords(lastMessage, lastColors);
             }
         }
 
@@ -310,18 +376,45 @@
             lastMessage = inputField.value.trim();
             if (lastMessage.length === 0) return;
 
-            createWords(lastMessage);
+            setHighContrastColors();
+            createWords(lastMessage, lastColors);
             started = true;
             inputField.value = "";
             updateCharCount();
             updateButtonState();
+            shareButton.hidden = false;
         }
 
         function refreshPoster() {
             if (lastMessage.length > 0) {
-                createWords(lastMessage);
+                createWords(lastMessage, lastColors);
                 started = true;
             }
+        }
+
+        function sharePoster() {
+            const data = {
+                message: lastMessage,
+                colors: lastColors
+            };
+            const jsonString = JSON.stringify(data);
+            const encodedData = encodeURIComponent(jsonString);
+            const shareUrl = window.location.origin + window.location.pathname + '#' + encodedData;
+
+            navigator.clipboard.writeText(shareUrl).then(() => {
+                showToast("Link copied!");
+            }).catch(err => {
+                console.error("Failed to copy link:", err);
+                showToast("Failed to copy link.");
+            });
+        }
+
+        function showToast(message) {
+            toastMessage.textContent = message;
+            toastMessage.classList.add("show");
+            setTimeout(() => {
+                toastMessage.classList.remove("show");
+            }, 3000);
         }
 
         function setHighContrastColors() {
@@ -335,6 +428,11 @@
                 wordColor = random(lightColors);
                 textColor = lightTextColor;
             }
+            lastColors = {
+                backgroundColor,
+                wordColor,
+                textColor
+            };
         }
 
         // 🔥 New font size calculation
@@ -361,7 +459,7 @@
             return adjusted;
         }
 
-        function createWords(msg) {
+        function createWords(msg, colors) {
             if (words.length > 0) {
                 for (let i = 0; i < words.length; i++) {
                     World.remove(world, words[i].body);
@@ -369,7 +467,9 @@
             }
             words = [];
 
-            setHighContrastColors();
+            backgroundColor = colors.backgroundColor;
+            wordColor = colors.wordColor;
+            textColor = colors.textColor;
 
             const processedMsg = msg.replace(/([.,!?;:])(?=\S)/g, '$1 ');
             let parts = processedMsg.trim().split(/\s+/).filter(Boolean);
