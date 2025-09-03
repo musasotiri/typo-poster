@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Poster Generator v1.9.5</title>
+    <title>Poster Generator v2.0.9</title>
     <style>
         body {
             margin: 0;
@@ -117,6 +117,15 @@
             box-shadow: 0 8px 16px rgba(52, 58, 64, 0.2);
         }
 
+        #logo-svg {
+            position: absolute;
+            top: 3px;
+            left: 10px;
+            width: 7%;
+            height: auto;
+            z-index: 10;
+        }
+
         @media(max-width: 768px) {
             body {
                 flex-direction: column;
@@ -145,6 +154,25 @@
 <body>
     <div class="left">
         <div id="poster">
+            <svg id="logo-svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="300"
+                height="500" viewBox="0 0 300 500">
+                <defs>
+                    <clipPath id="clip-katakata-badge_3">
+                        <rect width="300" height="500" />
+                    </clipPath>
+                </defs>
+                <g id="katakata-badge_3" data-name="katakata-badge – 3" clip-path="url(#clip-katakata-badge_3)">
+                    <rect width="300" height="500" fill="#fff" />
+                    <g id="logo-k-blue" transform="translate(0.419 79.129)">
+                        <path id="Path_1" data-name="Path 1"
+                            d="M2,0V26.162H175.434V227.829H78.521v.606L27.98,278.94V227.829H1.818v77.309H1.782l.036.036h0l-.036,37,88.18-88.18H201.6V0Z"
+                            fill="#2176ff" />
+                        <path id="Path_2" data-name="Path 2"
+                            d="M.54,16.7V142.911H29.3V89.34l46.514,53.571h39.6l-58.739-66.4L107.468,16.7H72.574L29.3,68.239V16.7Z"
+                            transform="translate(1.385 42.823)" fill="#2176ff" />
+                    </g>
+                </g>
+            </svg>
             <button id="refresh-btn">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
