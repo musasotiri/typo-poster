@@ -458,7 +458,9 @@
             if (window.location.hash) {
                 try {
                     const encodedData = window.location.hash.substring(1);
-                    const decodedJsonString = decodeURIComponent(encodedData);
+
+                    // 🔑 Decode Base64
+                    const decodedJsonString = decodeURIComponent(escape(atob(encodedData)));
                     const data = JSON.parse(decodedJsonString);
 
                     if (data && data.message && data.message.length > 0) {
@@ -468,18 +470,17 @@
                         started = true;
                         shareButton.hidden = false;
                     } else {
-                        // Bug Fix: If URL message is empty, load default poster
                         loadDefaultPoster();
                     }
                 } catch (e) {
                     console.error("Failed to decode URL data:", e);
-                    // Fallback to default poster if URL is invalid
                     loadDefaultPoster();
                 }
             } else {
                 loadDefaultPoster();
             }
         }
+
 
         function loadDefaultPoster() {
             lastMessage = "1% better, setiap hari";
@@ -557,7 +558,9 @@
                 colors: lastColors
             };
             const jsonString = JSON.stringify(data);
-            const encodedData = encodeURIComponent(jsonString);
+
+            // 🔑 Encode pakai Base64
+            const encodedData = btoa(unescape(encodeURIComponent(jsonString)));
             const shareUrl = window.location.origin + window.location.pathname + '#' + encodedData;
 
             navigator.clipboard.writeText(shareUrl).then(() => {
@@ -568,6 +571,7 @@
                 showToast("Alamak… link tak berjaya dicopy 😅 Cuba lagi.");
             });
         }
+
 
         function showSuccessOverlay() {
             const overlay = document.getElementById('success-overlay');
