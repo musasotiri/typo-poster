@@ -739,7 +739,7 @@
                     World.add(world, this.body);
                 }
 
-                show(sketch) {
+                show() {
                     let pos = this.body.position;
                     this.body.angle = sketch.constrain(this.body.angle, -sketch.PI / 4, sketch.PI / 4);
                     let angle = this.body.angle;
@@ -758,10 +758,21 @@
 
                     sketch.fill(this.textColor);
 
-                    // This is the key change:
+                    // Set both horizontal and vertical alignment to CENTER
                     sketch.textAlign(sketch.CENTER, sketch.CENTER);
-                    sketch.textSize(this.fontSize);
-                    sketch.text(this.word, 0, 7);
+
+                    // Define different offsets for desktop and mobile
+                    let verticalOffset;
+                    if (window.innerWidth <= 768) {
+                        // Offset for mobile devices
+                        verticalOffset = 5; // Adjust this value to get perfect centering on mobile
+                    } else {
+                        // Offset for desktop devices
+                        verticalOffset = 7; // Adjust this value to get perfect centering on desktop
+                    }
+
+                    // Draw the text with the conditional vertical offset
+                    sketch.text(this.word, 0, verticalOffset);
 
                     sketch.pop();
                 }
