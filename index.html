@@ -329,7 +329,7 @@
         <div id="input-panel">
             <div id="input-and-controls">
                 <div id="input-container">
-                    <input type="text" id="message" maxlength="140" placeholder="Type your message here..." />
+                    <input type="text" id="message" maxlength="140" placeholder="Tulis mesej power anda kat sini..." />
                     <button id="generate-btn" disabled>
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -449,7 +449,7 @@
         }
 
         function loadDefaultPoster() {
-            lastMessage = "1% better, everyday";
+            lastMessage = "1% better, setiap hari";
             setHighContrastColors();
             createWords(lastMessage, lastColors);
             started = true;
@@ -515,7 +515,7 @@
 
         function sharePoster() {
             if (!lastMessage || lastMessage.length === 0) {
-                showToast("Please generate a poster first!");
+                showToast("Oops, kena generate poster dulu then boleh share 👍");
                 return;
             }
 
@@ -529,10 +529,10 @@
 
             navigator.clipboard.writeText(shareUrl).then(() => {
                 showSuccessOverlay();
-                showToast("Link copied!");
+                showToast("Link dah copy, boleh paste & share 🚀");
             }).catch(err => {
                 console.error("Failed to copy link:", err);
-                showToast("Failed to copy link.");
+                showToast("Alamak… link tak berjaya dicopy 😅 Cuba lagi.");
             });
         }
 
