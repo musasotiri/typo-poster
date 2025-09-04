@@ -5,28 +5,23 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- Primary Meta Tags -->
     <title>KataKata - Poster Gravity Effect</title>
     <meta name="title" content="KataKata - Poster Gravity Effect">
     <meta name="description" content="Simple words, big impact. Cipta poster gravity effect & share dengan mudah! ✨">
 
-    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://katakata.my/"> <!-- tukar ikut domain kau -->
+    <meta property="og:url" content="https://katakata.my/">
     <meta property="og:title" content="KataKata - Poster Gravity Effect">
     <meta property="og:description"
         content="Simple words, big impact. Cipta poster gravity effect & share dengan mudah! ✨">
     <meta property="og:image" content="https://katakata.my/wp-content/uploads/2025/07/katakata-home1.png">
-    <!-- letak preview image -->
 
-    <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://katakata.my/"> <!-- tukar ikut domain kau -->
+    <meta property="twitter:url" content="https://katakata.my/">
     <meta property="twitter:title" content="KataKata - Poster Gravity Effect">
     <meta property="twitter:description"
         content="Simple words, big impact. Cipta poster gravity effect & share dengan mudah! ✨">
     <meta property="twitter:image" content="https://katakata.my/wp-content/uploads/2025/07/katakata-home1.png">
-    <!-- letak preview image -->
 
     <style>
         body {
@@ -396,8 +391,6 @@
         let lastMessage = "";
         let lastColors = {};
 
-        let anim;
-
         const lightColors = ['#f1faee', '#a8dadc'];
         const darkColors = ['#e63946', '#457b9d', '#1d3557'];
         const lightTextColor = '#1d3557';
@@ -410,34 +403,8 @@
             checkUrlAndLoadPoster();
         }
 
-        function toHexFromP5ColorOrString(val, fallback = "#2176FF") {
-            if (!val) return fallback;
-
-            // already a string (hex like '#123456' or color name)
-            if (typeof val === "string") return val;
-
-            // p5.Color often exposes `.levels` (array [r,g,b,a])
-            if (typeof val === "object") {
-                const levels = val.levels || val._array || null;
-                if (Array.isArray(levels) && levels.length >= 3) {
-                    const r = Math.round(levels[0]);
-                    const g = Math.round(levels[1]);
-                    const b = Math.round(levels[2]);
-                    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-                }
-
-                // sometimes the object might be an Arguments-like or numeric array
-                if (Array.isArray(val)) {
-                    const r = Math.round(val[0] || 0);
-                    const g = Math.round(val[1] || 0);
-                    const b = Math.round(val[2] || 0);
-                    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-                }
-            }
-
-            return fallback;
-        }
-
+        // This function is no longer needed because we will use hex strings directly.
+        // function toHexFromP5ColorOrString(val, fallback = "#2176FF") { ... }
 
         function setup() {
             let canvasWidth, canvasHeight;
@@ -485,7 +452,6 @@
         }
 
         function checkUrlAndLoadPoster() {
-            // no hash -> load default
             if (!window.location.hash || window.location.hash.length <= 1) {
                 loadDefaultPoster();
                 return;
@@ -494,66 +460,32 @@
             const rawHash = window.location.hash.substring(1);
             let posterData = null;
 
-            // Try several decode strategies (LZString preferred, then base64 utf8, then URI-encoded JSON)
             try {
-                // 1) LZString if available (best for long/utf8-safe)
-                if (typeof LZString !== "undefined" && rawHash.length > 0) {
-                    try {
-                        const decompressed = LZString.decompressFromEncodedURIComponent(rawHash);
-                        if (decompressed) {
-                            posterData = JSON.parse(decompressed);
-                        }
-                    } catch (e) {
-                        console.warn("LZString decompress failed, fallback:", e);
-                    }
+                const decompressed = LZString.decompressFromEncodedURIComponent(rawHash);
+                if (decompressed) {
+                    posterData = JSON.parse(decompressed);
                 }
-
-                // 2) If still null, try base64 utf8 (safe)
-                if (!posterData) {
-                    try {
-                        // decode base64 utf8 safely
-                        const decoded = decodeURIComponent(escape(atob(rawHash)));
-                        if (decoded) posterData = JSON.parse(decoded);
-                    } catch (e) {
-                        // ignore - fallback to next
-                    }
-                }
-
-                // 3) If still null, try plain URI-encoded JSON
-                if (!posterData) {
+            } catch (e) {
+                console.warn("LZString decompress failed, fallback:", e);
+                try {
+                    const decoded = decodeURIComponent(escape(atob(rawHash)));
+                    if (decoded) posterData = JSON.parse(decoded);
+                } catch (e) {
                     try {
                         const uriDecoded = decodeURIComponent(rawHash);
                         posterData = JSON.parse(uriDecoded);
                     } catch (e) {
-                        // ignore
+                        console.error("URL hash parsing failed:", e);
                     }
                 }
-
-            } catch (err) {
-                console.error("checkUrlAndLoadPoster parse error:", err);
-                posterData = null;
             }
 
-            // If we got a posterData object, sanitize & load it
             if (posterData && posterData.message && posterData.message.length > 0) {
-                // ensure colors object exists
                 posterData.colors = posterData.colors || {};
+                posterData.colors.backgroundColor = posterData.colors.backgroundColor || "#f1faee";
+                posterData.colors.wordColor = posterData.colors.wordColor || "#1d3557";
+                posterData.colors.textColor = posterData.colors.textColor || "#f1faee";
 
-                // sanitize color values (use your existing normalize helper - adapt name if different)
-                posterData.colors.backgroundColor = toHexFromP5ColorOrString(
-                    posterData.colors.backgroundColor,
-                    "#f1faee"
-                );
-                posterData.colors.wordColor = toHexFromP5ColorOrString(
-                    posterData.colors.wordColor,
-                    "#1d3557"
-                );
-                posterData.colors.textColor = toHexFromP5ColorOrString(
-                    posterData.colors.textColor,
-                    "#f1faee"
-                );
-
-                // load poster
                 lastMessage = posterData.message;
                 lastColors = posterData.colors;
                 createWords(lastMessage, lastColors);
@@ -562,7 +494,6 @@
                 if (typeof shareButton !== "undefined" && shareButton) shareButton.hidden = false;
 
             } else {
-                // parsing failed or payload invalid -> show default
                 console.warn("No valid poster data found in URL; loading default poster.");
                 loadDefaultPoster();
             }
@@ -620,7 +551,6 @@
             setHighContrastColors();
             createWords(lastMessage, lastColors);
             started = true;
-            // inputField.value = "";
             updateCharCount();
             updateButtonState();
             shareButton.hidden = false;
@@ -646,8 +576,7 @@
             };
             const jsonString = JSON.stringify(data);
 
-            // 🔑 Encode pakai Base64
-            const encodedData = btoa(unescape(encodeURIComponent(jsonString)));
+            const encodedData = LZString.compressToEncodedURIComponent(jsonString);
             const shareUrl = window.location.origin + window.location.pathname + '#' + encodedData;
 
             navigator.clipboard.writeText(shareUrl).then(() => {
@@ -664,7 +593,6 @@
             const overlay = document.getElementById('success-overlay');
             const anim = document.getElementById('success-lottie');
 
-            // Show overlay
             overlay.classList.remove("hide");
             overlay.classList.add("show");
 
@@ -687,7 +615,6 @@
         }
 
         function setHighContrastColors() {
-            // pick from arrays using index to avoid edge cases with p5.random returning weird types
             const pick = (arr) => arr[floor(random(arr.length))];
 
             const isLightTheme = random() > 0.5;
@@ -700,44 +627,35 @@
                 wordColor = pick(lightColors);
                 textColor = lightTextColor;
             }
-
-            // make sure we store plain strings
             lastColors = {
-                backgroundColor: String(backgroundColor),
-                wordColor: String(wordColor),
-                textColor: String(textColor)
+                backgroundColor: backgroundColor,
+                wordColor: wordColor,
+                textColor: textColor
             };
         }
 
 
 
         function calculateFontSize(parts) {
-            // Use the canvas diagonal as a robust reference for size
             const diagonal = Math.sqrt(width * width + height * height);
-
-            // Initial font size is a proportion of the diagonal
             let baseFontSize = diagonal * 0.1;
 
-            // Find the longest word to prevent overflow
             const longestWord = parts.reduce((a, b) => a.length > b.length ? a : b, "");
             textSize(baseFontSize);
             const longestWidth = textWidth(longestWord);
 
-            // Adjust font size if the longest word is too wide
             let adjusted = baseFontSize;
             if (longestWidth > width * 0.9) {
                 adjusted *= (width * 0.9 / longestWidth);
             }
 
-            // Use a non-linear scaling factor based on the number of words.
-            // This creates a more gradual decrease than a linear map.
             const numWords = parts.length;
-            const maxWordsForScaling = 25; // Define a new max to prevent excessive reduction
+            const maxWordsForScaling = 25;
             let scalingFactor = 1.0;
 
             if (numWords > 1) {
                 const normalizedWordCount = Math.min(numWords, maxWordsForScaling) / maxWordsForScaling;
-                scalingFactor = Math.pow(1 - normalizedWordCount, 0.4); // The exponent controls the curve's steepness
+                scalingFactor = Math.pow(1 - normalizedWordCount, 0.4);
             }
             adjusted *= scalingFactor;
 
@@ -765,13 +683,11 @@
 
             if (parts.length === 0) return;
 
-            // Check for word merging with length constraint
             if (parts.length > 7) {
                 let mergedParts = [];
                 let i = 0;
                 while (i < parts.length) {
                     const shouldMerge = random() < 0.5;
-                    // New condition: Only merge if the combined word width is less than 70% of the canvas width
                     if (shouldMerge && i + 1 < parts.length) {
                         const mergedText = parts[i] + ' ' + parts[i + 1];
                         textSize(calculateFontSize(parts));
@@ -802,9 +718,7 @@
         }
 
         function draw() {
-            // background(backgroundColor);
-            console.log('fill value:', backgroundColor.color, typeof backgroundColor.color, backgroundColor.color && backgroundColor.color.levels);
-            background(toHexFromP5ColorOrString(backgroundColor, '#ffffff'));
+            background(backgroundColor);
 
             if (started) {
                 for (let w of words) {
@@ -817,9 +731,8 @@
             constructor(word, x, y, fontSize, color, textColor) {
                 this.word = word;
                 this.fontSize = fontSize;
-                // normalize color formats here
-                this.color = toHexFromP5ColorOrString(color, '#2176FF');
-                this.textColor = toHexFromP5ColorOrString(textColor, '#FFFFFF');
+                this.color = color;
+                this.textColor = textColor;
 
                 textSize(this.fontSize);
                 this.textWidth = textWidth(word);
@@ -832,8 +745,8 @@
                 const blockHeight = this.fontSize + visualPaddingY + physicsPadding;
 
                 this.body = Bodies.rectangle(x, y, blockWidth, blockHeight, {
-                    restitution: 0.05, // bouncing
-                    friction: 0.35, // sticky - slippery
+                    restitution: 0.05,
+                    friction: 0.35,
                     angle: random(-PI / 4, PI / 4)
                 });
                 World.add(world, this.body);
@@ -850,17 +763,13 @@
 
                 rectMode(CENTER);
                 noStroke();
-                // fill(this.color);
-                console.log('fill value:', this.color.color, typeof this.color.color, this.color.color && this.color.color.levels);
-                fill(toHexFromP5ColorOrString(this.color, '#2176FF'));
+                fill(this.color);
 
                 const visualPaddingX = 30;
                 const visualPaddingY = 10;
                 rect(0, 0, this.textWidth + visualPaddingX, this.fontSize + visualPaddingY);
 
-                // fill(this.textColor);
-                console.log('fill value:', this.textColor.color, typeof this.textColor.color, this.textColor.color && this.textColor.color.levels);
-                fill(toHexFromP5ColorOrString(this.textColor, '#2176FF'));
+                fill(this.textColor);
 
                 textAlign(CENTER, CENTER);
                 textSize(this.fontSize);
