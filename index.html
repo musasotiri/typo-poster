@@ -4,7 +4,30 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Poster Generator v2.1.3</title>
+
+    <!-- Primary Meta Tags -->
+    <title>KataKata - Poster Gravity Effect</title>
+    <meta name="title" content="KataKata - Poster Gravity Effect">
+    <meta name="description" content="Simple words, big impact. Cipta poster gravity effect & share dengan mudah! ✨">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://katakata.my/"> <!-- tukar ikut domain kau -->
+    <meta property="og:title" content="KataKata - Poster Gravity Effect">
+    <meta property="og:description"
+        content="Simple words, big impact. Cipta poster gravity effect & share dengan mudah! ✨">
+    <meta property="og:image" content="https://katakata.my/wp-content/uploads/2025/07/katakata-home1.png">
+    <!-- letak preview image -->
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://katakata.my/"> <!-- tukar ikut domain kau -->
+    <meta property="twitter:title" content="KataKata - Poster Gravity Effect">
+    <meta property="twitter:description"
+        content="Simple words, big impact. Cipta poster gravity effect & share dengan mudah! ✨">
+    <meta property="twitter:image" content="https://katakata.my/wp-content/uploads/2025/07/katakata-home1.png">
+    <!-- letak preview image -->
+
     <style>
         body {
             margin: 0;
@@ -160,6 +183,8 @@
             opacity: 0;
             pointer-events: none;
             z-index: 110;
+            font-size: small;
+            text-align: center;
         }
 
         /* Intro animation */
@@ -274,6 +299,14 @@
             #share-btn {
                 bottom: -43px;
                 right: 44px;
+            }
+
+            #success-overlay {
+                top: -20%;
+            }
+
+            #toast-message {
+                width: 65%;
             }
         }
     </style>
