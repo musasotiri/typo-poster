@@ -28,7 +28,6 @@
     <meta property="twitter:image" content="https://katakata.my/wp-content/uploads/2025/07/katakata-home1.png">
     <!-- letak preview image -->
 
-
     <style>
         body {
             margin: 0;
@@ -311,10 +310,6 @@
             }
         }
     </style>
-
-    <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
-
-
 </head>
 
 <body>
@@ -384,9 +379,10 @@
 
 
 
-    <script type="module" src="https://unpkg.com/@dotlottie/player-component@latest/dist/dotlottie-player.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    <script type="module" src="https://unpkg.com/@dotlottie/player-component@latest/dist/dotlottie-player.js"></script>
 
     <script>
         let Engine = Matter.Engine,
@@ -413,6 +409,35 @@
             setup();
             checkUrlAndLoadPoster();
         }
+
+        function toHexFromP5ColorOrString(val, fallback = "#2176FF") {
+            if (!val) return fallback;
+
+            // already a string (hex like '#123456' or color name)
+            if (typeof val === "string") return val;
+
+            // p5.Color often exposes `.levels` (array [r,g,b,a])
+            if (typeof val === "object") {
+                const levels = val.levels || val._array || null;
+                if (Array.isArray(levels) && levels.length >= 3) {
+                    const r = Math.round(levels[0]);
+                    const g = Math.round(levels[1]);
+                    const b = Math.round(levels[2]);
+                    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+                }
+
+                // sometimes the object might be an Arguments-like or numeric array
+                if (Array.isArray(val)) {
+                    const r = Math.round(val[0] || 0);
+                    const g = Math.round(val[1] || 0);
+                    const b = Math.round(val[2] || 0);
+                    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+                }
+            }
+
+            return fallback;
+        }
+
 
         function setup() {
             let canvasWidth, canvasHeight;
@@ -459,25 +484,87 @@
             });
         }
 
-        // Load Poster - decode + decompress
         function checkUrlAndLoadPoster() {
-            if (window.location.hash.length > 1) {
-                try {
-                    const encodedData = decodeURIComponent(window.location.hash.substring(1));
-                    const jsonString = LZString.decompressFromEncodedURIComponent(encodedData);
+            // no hash -> load default
+            if (!window.location.hash || window.location.hash.length <= 1) {
+                loadDefaultPoster();
+                return;
+            }
 
-                    if (!jsonString) {
-                        console.warn("Poster data invalid");
-                        return;
-                    }
+            const rawHash = window.location.hash.substring(1);
+            let posterData = null;
 
-                    const posterData = JSON.parse(jsonString);
-                    if (posterData.message) {
-                        createWords(posterData.message, posterData.colors);
+            // Try several decode strategies (LZString preferred, then base64 utf8, then URI-encoded JSON)
+            try {
+                // 1) LZString if available (best for long/utf8-safe)
+                if (typeof LZString !== "undefined" && rawHash.length > 0) {
+                    try {
+                        const decompressed = LZString.decompressFromEncodedURIComponent(rawHash);
+                        if (decompressed) {
+                            posterData = JSON.parse(decompressed);
+                        }
+                    } catch (e) {
+                        console.warn("LZString decompress failed, fallback:", e);
                     }
-                } catch (error) {
-                    console.error("Error loading poster:", error);
                 }
+
+                // 2) If still null, try base64 utf8 (safe)
+                if (!posterData) {
+                    try {
+                        // decode base64 utf8 safely
+                        const decoded = decodeURIComponent(escape(atob(rawHash)));
+                        if (decoded) posterData = JSON.parse(decoded);
+                    } catch (e) {
+                        // ignore - fallback to next
+                    }
+                }
+
+                // 3) If still null, try plain URI-encoded JSON
+                if (!posterData) {
+                    try {
+                        const uriDecoded = decodeURIComponent(rawHash);
+                        posterData = JSON.parse(uriDecoded);
+                    } catch (e) {
+                        // ignore
+                    }
+                }
+
+            } catch (err) {
+                console.error("checkUrlAndLoadPoster parse error:", err);
+                posterData = null;
+            }
+
+            // If we got a posterData object, sanitize & load it
+            if (posterData && posterData.message && posterData.message.length > 0) {
+                // ensure colors object exists
+                posterData.colors = posterData.colors || {};
+
+                // sanitize color values (use your existing normalize helper - adapt name if different)
+                posterData.colors.backgroundColor = toHexFromP5ColorOrString(
+                    posterData.colors.backgroundColor,
+                    "#f1faee"
+                );
+                posterData.colors.wordColor = toHexFromP5ColorOrString(
+                    posterData.colors.wordColor,
+                    "#1d3557"
+                );
+                posterData.colors.textColor = toHexFromP5ColorOrString(
+                    posterData.colors.textColor,
+                    "#f1faee"
+                );
+
+                // load poster
+                lastMessage = posterData.message;
+                lastColors = posterData.colors;
+                createWords(lastMessage, lastColors);
+                started = true;
+                if (typeof inputPanel !== "undefined" && inputPanel) inputPanel.style.display = "none";
+                if (typeof shareButton !== "undefined" && shareButton) shareButton.hidden = false;
+
+            } else {
+                // parsing failed or payload invalid -> show default
+                console.warn("No valid poster data found in URL; loading default poster.");
+                loadDefaultPoster();
             }
         }
 
@@ -547,28 +634,28 @@
             }
         }
 
-        // Share Poster - compress + encode
-        function sharePoster(message, colors) {
-            if (!message || message.trim() === "") {
-                showToast("Sila generate poster dulu!");
+        function sharePoster() {
+            if (!lastMessage || lastMessage.length === 0) {
+                showToast("Oops, kena generate poster dulu then boleh share 👍");
                 return;
             }
 
-            const posterData = { message, colors };
-            const jsonString = JSON.stringify(posterData);
+            const data = {
+                message: lastMessage,
+                colors: lastColors
+            };
+            const jsonString = JSON.stringify(data);
 
-            // Compress safely for all browsers (Safari/iOS included)
-            const encodedData = LZString.compressToEncodedURIComponent(jsonString);
+            // 🔑 Encode pakai Base64
+            const encodedData = btoa(unescape(encodeURIComponent(jsonString)));
+            const shareUrl = window.location.origin + window.location.pathname + '#' + encodedData;
 
-            const shareUrl = `${window.location.origin}${window.location.pathname}#${encodedData}`;
-
-            // Copy link to clipboard
             navigator.clipboard.writeText(shareUrl).then(() => {
-                showOverlay(); // animation lottie keluar
-                showToast("Link poster dah copy 👍 — boleh terus share!");
+                showSuccessOverlay();
+                showToast("Link dah copy, boleh paste & share 🚀");
             }).catch(err => {
                 console.error("Failed to copy link:", err);
-                showToast("Gagal nak copy link 😔");
+                showToast("Alamak… link tak berjaya dicopy 😅 Cuba lagi.");
             });
         }
 
@@ -600,22 +687,28 @@
         }
 
         function setHighContrastColors() {
+            // pick from arrays using index to avoid edge cases with p5.random returning weird types
+            const pick = (arr) => arr[floor(random(arr.length))];
+
             const isLightTheme = random() > 0.5;
             if (isLightTheme) {
-                backgroundColor = random(lightColors);
-                wordColor = random(darkColors);
+                backgroundColor = pick(lightColors);
+                wordColor = pick(darkColors);
                 textColor = darkTextColor;
             } else {
-                backgroundColor = random(darkColors);
-                wordColor = random(lightColors);
+                backgroundColor = pick(darkColors);
+                wordColor = pick(lightColors);
                 textColor = lightTextColor;
             }
+
+            // make sure we store plain strings
             lastColors = {
-                backgroundColor,
-                wordColor,
-                textColor
+                backgroundColor: String(backgroundColor),
+                wordColor: String(wordColor),
+                textColor: String(textColor)
             };
         }
+
 
 
         function calculateFontSize(parts) {
@@ -709,7 +802,9 @@
         }
 
         function draw() {
-            background(backgroundColor);
+            // background(backgroundColor);
+            console.log('fill value:', backgroundColor.color, typeof backgroundColor.color, backgroundColor.color && backgroundColor.color.levels);
+            background(toHexFromP5ColorOrString(backgroundColor, '#ffffff'));
 
             if (started) {
                 for (let w of words) {
@@ -722,8 +817,10 @@
             constructor(word, x, y, fontSize, color, textColor) {
                 this.word = word;
                 this.fontSize = fontSize;
-                this.color = color;
-                this.textColor = textColor;
+                // normalize color formats here
+                this.color = toHexFromP5ColorOrString(color, '#2176FF');
+                this.textColor = toHexFromP5ColorOrString(textColor, '#FFFFFF');
+
                 textSize(this.fontSize);
                 this.textWidth = textWidth(word);
 
@@ -753,13 +850,18 @@
 
                 rectMode(CENTER);
                 noStroke();
-                fill(this.color);
+                // fill(this.color);
+                console.log('fill value:', this.color.color, typeof this.color.color, this.color.color && this.color.color.levels);
+                fill(toHexFromP5ColorOrString(this.color, '#2176FF'));
 
                 const visualPaddingX = 30;
                 const visualPaddingY = 10;
                 rect(0, 0, this.textWidth + visualPaddingX, this.fontSize + visualPaddingY);
 
-                fill(this.textColor);
+                // fill(this.textColor);
+                console.log('fill value:', this.textColor.color, typeof this.textColor.color, this.textColor.color && this.textColor.color.levels);
+                fill(toHexFromP5ColorOrString(this.textColor, '#2176FF'));
+
                 textAlign(CENTER, CENTER);
                 textSize(this.fontSize);
                 text(this.word, 0, 5);
