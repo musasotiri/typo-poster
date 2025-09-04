@@ -372,413 +372,406 @@
         </div>
     </div>
 
-
-
     <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <script type="module" src="https://unpkg.com/@dotlottie/player-component@latest/dist/dotlottie-player.js"></script>
 
     <script>
-        let Engine = Matter.Engine,
-            World = Matter.World,
-            Bodies = Matter.Bodies;
+        // This is the correct way to instantiate a p5 sketch
+        const s = (sketch) => {
+            let Engine = Matter.Engine,
+                World = Matter.World,
+                Bodies = Matter.Bodies;
 
-        let engine, world;
-        let words = [];
-        let inputField, generateButton, refreshButton, charCounter, shareButton, toastMessage;
-        let started = false;
-        let lastMessage = "";
-        let lastColors = {};
+            let engine, world;
+            let words = [];
+            let inputField, generateButton, refreshButton, charCounter, shareButton, toastMessage;
+            let started = false;
+            let lastMessage = "";
+            let lastColors = {};
 
-        const lightColors = ['#f1faee', '#a8dadc'];
-        const darkColors = ['#e63946', '#457b9d', '#1d3557'];
-        const lightTextColor = '#1d3557';
-        const darkTextColor = '#f1faee';
+            const lightColors = ['#f1faee', '#a8dadc'];
+            const darkColors = ['#e63946', '#457b9d', '#1d3557'];
+            const lightTextColor = '#1d3557';
+            const darkTextColor = '#f1faee';
 
-        let backgroundColor, wordColor, textColor;
+            let backgroundColor, wordColor, textColor;
 
-        window.onload = function () {
-            setup();
-            checkUrlAndLoadPoster();
-        }
+            sketch.setup = function () {
+                let canvasWidth, canvasHeight;
+                const aspectRatio = Math.sqrt(2);
 
-        // This function is no longer needed because we will use hex strings directly.
-        // function toHexFromP5ColorOrString(val, fallback = "#2176FF") { ... }
+                let viewportH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+                let viewportW = window.visualViewport ? window.visualViewport.width : window.innerWidth;
 
-        function setup() {
-            let canvasWidth, canvasHeight;
-            const aspectRatio = Math.sqrt(2);
-
-            let viewportH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-            let viewportW = window.visualViewport ? window.visualViewport.width : window.innerWidth;
-
-            if (viewportW > viewportH) {
-                canvasHeight = viewportH * 0.9;
-                canvasWidth = canvasHeight / aspectRatio;
-            } else {
-                canvasWidth = viewportW * 0.9;
-                canvasHeight = canvasWidth * aspectRatio;
-            }
-
-            let canvas = createCanvas(canvasWidth, canvasHeight);
-            canvas.parent('poster');
-            engine = Engine.create();
-            world = engine.world;
-            Engine.run(engine);
-
-            let ground = Bodies.rectangle(width / 2, height + 50, width, 100, { isStatic: true });
-            let leftWall = Bodies.rectangle(-50, height / 2, 100, height, { isStatic: true });
-            let rightWall = Bodies.rectangle(width + 50, height / 2, 100, height, { isStatic: true });
-            World.add(world, [ground, leftWall, rightWall]);
-
-            inputField = document.getElementById("message");
-            generateButton = document.getElementById("generate-btn");
-            refreshButton = document.getElementById("refresh-btn");
-            charCounter = document.getElementById("char-counter");
-            shareButton = document.getElementById("share-btn");
-            toastMessage = document.getElementById("toast-message");
-
-            generateButton.addEventListener("click", generatePoster);
-            refreshButton.addEventListener("click", refreshPoster);
-            shareButton.addEventListener("click", sharePoster);
-            inputField.addEventListener("keypress", function (e) {
-                if (e.key === "Enter") generatePoster();
-            });
-            inputField.addEventListener("input", function () {
-                updateCharCount();
-                updateButtonState();
-            });
-        }
-
-        function checkUrlAndLoadPoster() {
-            if (!window.location.hash || window.location.hash.length <= 1) {
-                loadDefaultPoster();
-                return;
-            }
-
-            const rawHash = window.location.hash.substring(1);
-            let posterData = null;
-
-            try {
-                const decompressed = LZString.decompressFromEncodedURIComponent(rawHash);
-                if (decompressed) {
-                    posterData = JSON.parse(decompressed);
+                if (viewportW > viewportH) {
+                    canvasHeight = viewportH * 0.9;
+                    canvasWidth = canvasHeight / aspectRatio;
+                } else {
+                    canvasWidth = viewportW * 0.9;
+                    canvasHeight = canvasWidth * aspectRatio;
                 }
-            } catch (e) {
-                console.warn("LZString decompress failed, fallback:", e);
-                try {
-                    const decoded = decodeURIComponent(escape(atob(rawHash)));
-                    if (decoded) posterData = JSON.parse(decoded);
-                } catch (e) {
-                    try {
-                        const uriDecoded = decodeURIComponent(rawHash);
-                        posterData = JSON.parse(uriDecoded);
-                    } catch (e) {
-                        console.error("URL hash parsing failed:", e);
+
+                let canvas = sketch.createCanvas(canvasWidth, canvasHeight);
+                canvas.parent('poster');
+                engine = Engine.create();
+                world = engine.world;
+                Engine.run(engine);
+
+                let ground = Bodies.rectangle(sketch.width / 2, sketch.height + 50, sketch.width, 100, { isStatic: true });
+                let leftWall = Bodies.rectangle(-50, sketch.height / 2, 100, sketch.height, { isStatic: true });
+                let rightWall = Bodies.rectangle(sketch.width + 50, sketch.height / 2, 100, sketch.height, { isStatic: true });
+                World.add(world, [ground, leftWall, rightWall]);
+
+                inputField = document.getElementById("message");
+                generateButton = document.getElementById("generate-btn");
+                refreshButton = document.getElementById("refresh-btn");
+                charCounter = document.getElementById("char-counter");
+                shareButton = document.getElementById("share-btn");
+                toastMessage = document.getElementById("toast-message");
+
+                generateButton.addEventListener("click", generatePoster);
+                refreshButton.addEventListener("click", refreshPoster);
+                shareButton.addEventListener("click", sharePoster);
+                inputField.addEventListener("keypress", function (e) {
+                    if (e.key === "Enter") generatePoster();
+                });
+                inputField.addEventListener("input", function () {
+                    updateCharCount();
+                    updateButtonState();
+                });
+
+                checkUrlAndLoadPoster();
+            };
+
+            sketch.windowResized = function () {
+                let canvasWidth, canvasHeight;
+                const aspectRatio = Math.sqrt(2);
+
+                let viewportH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+                let viewportW = window.visualViewport ? window.visualViewport.width : window.innerWidth;
+
+                if (viewportW > viewportH) {
+                    canvasHeight = viewportH * 0.9;
+                    canvasWidth = canvasHeight / aspectRatio;
+                } else {
+                    canvasWidth = viewportW * 0.9;
+                    canvasHeight = canvasWidth * aspectRatio;
+                }
+
+                sketch.resizeCanvas(canvasWidth, canvasHeight);
+                World.clear(world, false);
+                let ground = Bodies.rectangle(sketch.width / 2, sketch.height + 50, sketch.width, 100, { isStatic: true });
+                let leftWall = Bodies.rectangle(-50, sketch.height / 2, 100, sketch.height, { isStatic: true });
+                let rightWall = Bodies.rectangle(sketch.width + 50, sketch.height / 2, 100, sketch.height, { isStatic: true });
+                World.add(world, [ground, leftWall, rightWall]);
+                if (lastMessage.length > 0) {
+                    createWords(lastMessage, lastColors);
+                }
+            };
+
+            sketch.draw = function () {
+                sketch.background(backgroundColor);
+
+                if (started) {
+                    for (let w of words) {
+                        w.show(sketch);
                     }
                 }
+            };
+
+            function checkUrlAndLoadPoster() {
+                if (!window.location.hash || window.location.hash.length <= 1) {
+                    loadDefaultPoster();
+                    return;
+                }
+
+                const rawHash = window.location.hash.substring(1);
+                let posterData = null;
+
+                try {
+                    const decompressed = LZString.decompressFromEncodedURIComponent(rawHash);
+                    if (decompressed) {
+                        posterData = JSON.parse(decompressed);
+                    }
+                } catch (e) {
+                    console.warn("LZString decompress failed, fallback:", e);
+                    try {
+                        const decoded = decodeURIComponent(escape(atob(rawHash)));
+                        if (decoded) posterData = JSON.parse(decoded);
+                    } catch (e) {
+                        try {
+                            const uriDecoded = decodeURIComponent(rawHash);
+                            posterData = JSON.parse(uriDecoded);
+                        } catch (e) {
+                            console.error("URL hash parsing failed:", e);
+                        }
+                    }
+                }
+
+                if (posterData && posterData.message && posterData.message.length > 0) {
+                    posterData.colors = posterData.colors || {};
+                    posterData.colors.backgroundColor = posterData.colors.backgroundColor || "#f1faee";
+                    posterData.colors.wordColor = posterData.colors.wordColor || "#1d3557";
+                    posterData.colors.textColor = posterData.colors.textColor || "#f1faee";
+
+                    lastMessage = posterData.message;
+                    lastColors = posterData.colors;
+                    createWords(lastMessage, lastColors);
+                    started = true;
+                    if (typeof inputPanel !== "undefined" && inputPanel) inputPanel.style.display = "none";
+                    if (typeof shareButton !== "undefined" && shareButton) shareButton.hidden = false;
+
+                } else {
+                    console.warn("No valid poster data found in URL; loading default poster.");
+                    loadDefaultPoster();
+                }
             }
 
-            if (posterData && posterData.message && posterData.message.length > 0) {
-                posterData.colors = posterData.colors || {};
-                posterData.colors.backgroundColor = posterData.colors.backgroundColor || "#f1faee";
-                posterData.colors.wordColor = posterData.colors.wordColor || "#1d3557";
-                posterData.colors.textColor = posterData.colors.textColor || "#f1faee";
-
-                lastMessage = posterData.message;
-                lastColors = posterData.colors;
-                createWords(lastMessage, lastColors);
-                started = true;
-                if (typeof inputPanel !== "undefined" && inputPanel) inputPanel.style.display = "none";
-                if (typeof shareButton !== "undefined" && shareButton) shareButton.hidden = false;
-
-            } else {
-                console.warn("No valid poster data found in URL; loading default poster.");
-                loadDefaultPoster();
-            }
-        }
-
-
-        function loadDefaultPoster() {
-            lastMessage = "1% better, setiap hari";
-            setHighContrastColors();
-            createWords(lastMessage, lastColors);
-            started = true;
-        }
-
-        function windowResized() {
-            let canvasWidth, canvasHeight;
-            const aspectRatio = Math.sqrt(2);
-
-            let viewportH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-            let viewportW = window.visualViewport ? window.visualViewport.width : window.innerWidth;
-
-            if (viewportW > viewportH) {
-                canvasHeight = viewportH * 0.9;
-                canvasWidth = canvasHeight / aspectRatio;
-            } else {
-                canvasWidth = viewportW * 0.9;
-                canvasHeight = canvasWidth * aspectRatio;
-            }
-
-            resizeCanvas(canvasWidth, canvasHeight);
-            World.clear(world, false);
-            let ground = Bodies.rectangle(width / 2, height + 50, width, 100, { isStatic: true });
-            let leftWall = Bodies.rectangle(-50, height / 2, 100, height, { isStatic: true });
-            let rightWall = Bodies.rectangle(width + 50, height / 2, 100, height, { isStatic: true });
-            World.add(world, [ground, leftWall, rightWall]);
-            if (lastMessage.length > 0) {
-                createWords(lastMessage, lastColors);
-            }
-        }
-
-        function updateCharCount() {
-            charCounter.textContent = `${inputField.value.length}/140`;
-            if (inputField.value.length === 0) {
-                shareButton.hidden = true;
-            }
-        }
-
-        function updateButtonState() {
-            generateButton.disabled = inputField.value.trim().length === 0;
-        }
-
-        function generatePoster() {
-            lastMessage = inputField.value.trim();
-            if (lastMessage.length === 0) return;
-
-            setHighContrastColors();
-            createWords(lastMessage, lastColors);
-            started = true;
-            updateCharCount();
-            updateButtonState();
-            shareButton.hidden = false;
-        }
-
-        function refreshPoster() {
-            if (lastMessage.length > 0) {
+            function loadDefaultPoster() {
+                lastMessage = "1% better, setiap hari";
                 setHighContrastColors();
                 createWords(lastMessage, lastColors);
                 started = true;
             }
-        }
 
-        function sharePoster() {
-            if (!lastMessage || lastMessage.length === 0) {
-                showToast("Oops, kena generate poster dulu then boleh share 👍");
-                return;
-            }
-
-            const data = {
-                message: lastMessage,
-                colors: lastColors
-            };
-            const jsonString = JSON.stringify(data);
-
-            const encodedData = LZString.compressToEncodedURIComponent(jsonString);
-            const shareUrl = window.location.origin + window.location.pathname + '#' + encodedData;
-
-            navigator.clipboard.writeText(shareUrl).then(() => {
-                showSuccessOverlay();
-                showToast("Link dah copy, boleh paste & share 🚀");
-            }).catch(err => {
-                console.error("Failed to copy link:", err);
-                showToast("Alamak… link tak berjaya dicopy 😅 Cuba lagi.");
-            });
-        }
-
-
-        function showSuccessOverlay() {
-            const overlay = document.getElementById('success-overlay');
-            const anim = document.getElementById('success-lottie');
-
-            overlay.classList.remove("hide");
-            overlay.classList.add("show");
-
-            overlay.style.display = 'flex';
-            anim.seek(0);
-            anim.play();
-            setTimeout(() => {
-                overlay.classList.remove("show");
-                overlay.classList.add("hide");
-            }, 4000);
-        }
-
-
-        function showToast(message) {
-            toastMessage.textContent = message;
-            toastMessage.classList.add("show");
-            setTimeout(() => {
-                toastMessage.classList.remove("show");
-            }, 4000);
-        }
-
-        function setHighContrastColors() {
-            const pick = (arr) => arr[floor(random(arr.length))];
-
-            const isLightTheme = random() > 0.5;
-            if (isLightTheme) {
-                backgroundColor = pick(lightColors);
-                wordColor = pick(darkColors);
-                textColor = darkTextColor;
-            } else {
-                backgroundColor = pick(darkColors);
-                wordColor = pick(lightColors);
-                textColor = lightTextColor;
-            }
-            lastColors = {
-                backgroundColor: backgroundColor,
-                wordColor: wordColor,
-                textColor: textColor
-            };
-        }
-
-
-
-        function calculateFontSize(parts) {
-            const diagonal = Math.sqrt(width * width + height * height);
-            let baseFontSize = diagonal * 0.1;
-
-            const longestWord = parts.reduce((a, b) => a.length > b.length ? a : b, "");
-            textSize(baseFontSize);
-            const longestWidth = textWidth(longestWord);
-
-            let adjusted = baseFontSize;
-            if (longestWidth > width * 0.9) {
-                adjusted *= (width * 0.9 / longestWidth);
-            }
-
-            const numWords = parts.length;
-            const maxWordsForScaling = 25;
-            let scalingFactor = 1.0;
-
-            if (numWords > 1) {
-                const normalizedWordCount = Math.min(numWords, maxWordsForScaling) / maxWordsForScaling;
-                scalingFactor = Math.pow(1 - normalizedWordCount, 0.4);
-            }
-            adjusted *= scalingFactor;
-
-            const minSize = height * 0.05;
-            adjusted = max(adjusted, minSize);
-
-            return adjusted;
-        }
-
-
-        function createWords(msg, colors) {
-            if (words.length > 0) {
-                for (let i = 0; i < words.length; i++) {
-                    World.remove(world, words[i].body);
+            function updateCharCount() {
+                charCounter.textContent = `${inputField.value.length}/140`;
+                if (inputField.value.length === 0) {
+                    shareButton.hidden = true;
                 }
             }
-            words = [];
 
-            backgroundColor = colors.backgroundColor;
-            wordColor = colors.wordColor;
-            textColor = colors.textColor;
+            function updateButtonState() {
+                generateButton.disabled = inputField.value.trim().length === 0;
+            }
 
-            const processedMsg = msg.replace(/([.,!?;:])(?=\S)/g, '$1 ');
-            let parts = processedMsg.trim().split(/\s+/).filter(Boolean);
+            function generatePoster() {
+                lastMessage = inputField.value.trim();
+                if (lastMessage.length === 0) return;
 
-            if (parts.length === 0) return;
+                setHighContrastColors();
+                createWords(lastMessage, lastColors);
+                started = true;
+                updateCharCount();
+                updateButtonState();
+                shareButton.hidden = false;
+            }
 
-            if (parts.length > 7) {
-                let mergedParts = [];
-                let i = 0;
-                while (i < parts.length) {
-                    const shouldMerge = random() < 0.5;
-                    if (shouldMerge && i + 1 < parts.length) {
-                        const mergedText = parts[i] + ' ' + parts[i + 1];
-                        textSize(calculateFontSize(parts));
-                        if (textWidth(mergedText) < width * 0.6) {
-                            mergedParts.push(mergedText);
-                            i += 2;
+            function refreshPoster() {
+                if (lastMessage.length > 0) {
+                    setHighContrastColors();
+                    createWords(lastMessage, lastColors);
+                    started = true;
+                }
+            }
+
+            function sharePoster() {
+                if (!lastMessage || lastMessage.length === 0) {
+                    showToast("Oops, kena generate poster dulu then boleh share 👍");
+                    return;
+                }
+
+                const data = {
+                    message: lastMessage,
+                    colors: lastColors
+                };
+                const jsonString = JSON.stringify(data);
+
+                const encodedData = LZString.compressToEncodedURIComponent(jsonString);
+                const shareUrl = window.location.origin + window.location.pathname + '#' + encodedData;
+
+                navigator.clipboard.writeText(shareUrl).then(() => {
+                    showSuccessOverlay();
+                    showToast("Link dah copy, boleh paste & share 🚀");
+                }).catch(err => {
+                    console.error("Failed to copy link:", err);
+                    showToast("Alamak… link tak berjaya dicopy 😅 Cuba lagi.");
+                });
+            }
+
+            function showSuccessOverlay() {
+                const overlay = document.getElementById('success-overlay');
+                const anim = document.getElementById('success-lottie');
+
+                overlay.classList.remove("hide");
+                overlay.classList.add("show");
+
+                overlay.style.display = 'flex';
+                anim.seek(0);
+                anim.play();
+                setTimeout(() => {
+                    overlay.classList.remove("show");
+                    overlay.classList.add("hide");
+                }, 4000);
+            }
+
+            function showToast(message) {
+                toastMessage.textContent = message;
+                toastMessage.classList.add("show");
+                setTimeout(() => {
+                    toastMessage.classList.remove("show");
+                }, 4000);
+            }
+
+            function setHighContrastColors() {
+                const pick = (arr) => arr[sketch.floor(sketch.random(arr.length))];
+
+                const isLightTheme = sketch.random() > 0.5;
+                if (isLightTheme) {
+                    backgroundColor = pick(lightColors);
+                    wordColor = pick(darkColors);
+                    textColor = darkTextColor;
+                } else {
+                    backgroundColor = pick(darkColors);
+                    wordColor = pick(lightColors);
+                    textColor = lightTextColor;
+                }
+                lastColors = {
+                    backgroundColor: backgroundColor,
+                    wordColor: wordColor,
+                    textColor: textColor
+                };
+            }
+
+            function calculateFontSize(parts) {
+                const diagonal = sketch.sqrt(sketch.width * sketch.width + sketch.height * sketch.height);
+                let baseFontSize = diagonal * 0.1;
+
+                const longestWord = parts.reduce((a, b) => a.length > b.length ? a : b, "");
+                sketch.textSize(baseFontSize);
+                const longestWidth = sketch.textWidth(longestWord);
+
+                let adjusted = baseFontSize;
+                if (longestWidth > sketch.width * 0.9) {
+                    adjusted *= (sketch.width * 0.9 / longestWidth);
+                }
+
+                const numWords = parts.length;
+                const maxWordsForScaling = 25;
+                let scalingFactor = 1.0;
+
+                if (numWords > 1) {
+                    const normalizedWordCount = sketch.min(numWords, maxWordsForScaling) / maxWordsForScaling;
+                    scalingFactor = sketch.pow(1 - normalizedWordCount, 0.4);
+                }
+                adjusted *= scalingFactor;
+
+                const minSize = sketch.height * 0.05;
+                adjusted = sketch.max(adjusted, minSize);
+
+                return adjusted;
+            }
+
+            function createWords(msg, colors) {
+                if (words.length > 0) {
+                    for (let i = 0; i < words.length; i++) {
+                        World.remove(world, words[i].body);
+                    }
+                }
+                words = [];
+
+                backgroundColor = colors.backgroundColor;
+                wordColor = colors.wordColor;
+                textColor = colors.textColor;
+
+                const processedMsg = msg.replace(/([.,!?;:])(?=\S)/g, '$1 ');
+                let parts = processedMsg.trim().split(/\s+/).filter(Boolean);
+
+                if (parts.length === 0) return;
+
+                if (parts.length > 7) {
+                    let mergedParts = [];
+                    let i = 0;
+                    while (i < parts.length) {
+                        const shouldMerge = sketch.random() < 0.5;
+                        if (shouldMerge && i + 1 < parts.length) {
+                            const mergedText = parts[i] + ' ' + parts[i + 1];
+                            sketch.textSize(calculateFontSize(parts));
+                            if (sketch.textWidth(mergedText) < sketch.width * 0.6) {
+                                mergedParts.push(mergedText);
+                                i += 2;
+                            } else {
+                                mergedParts.push(parts[i]);
+                                i += 1;
+                            }
                         } else {
                             mergedParts.push(parts[i]);
                             i += 1;
                         }
-                    } else {
-                        mergedParts.push(parts[i]);
-                        i += 1;
                     }
+                    parts = mergedParts;
                 }
-                parts = mergedParts;
-            }
 
-            parts = parts.map(word => word.toUpperCase());
+                parts = parts.map(word => word.toUpperCase());
 
-            let adjustedFontSize = calculateFontSize(parts);
+                let adjustedFontSize = calculateFontSize(parts);
 
-            parts.reverse().forEach((w, i) => {
-                let x = width / 2 + random(-50, 50);
-                let y = -200 - i * (adjustedFontSize * 1.5);
-                words.push(new Word(w, x, y, adjustedFontSize, wordColor, textColor));
-            });
-        }
-
-        function draw() {
-            background(backgroundColor);
-
-            if (started) {
-                for (let w of words) {
-                    w.show();
-                }
-            }
-        }
-
-        class Word {
-            constructor(word, x, y, fontSize, color, textColor) {
-                this.word = word;
-                this.fontSize = fontSize;
-                this.color = color;
-                this.textColor = textColor;
-
-                textSize(this.fontSize);
-                this.textWidth = textWidth(word);
-
-                const visualPaddingX = 30;
-                const visualPaddingY = 10;
-                const physicsPadding = 4;
-
-                const blockWidth = this.textWidth + visualPaddingX + physicsPadding;
-                const blockHeight = this.fontSize + visualPaddingY + physicsPadding;
-
-                this.body = Bodies.rectangle(x, y, blockWidth, blockHeight, {
-                    restitution: 0.05,
-                    friction: 0.35,
-                    angle: random(-PI / 4, PI / 4)
+                parts.reverse().forEach((w, i) => {
+                    let x = sketch.width / 2 + sketch.random(-50, 50);
+                    let y = -200 - i * (adjustedFontSize * 1.5);
+                    words.push(new Word(w, x, y, adjustedFontSize, wordColor, textColor));
                 });
-                World.add(world, this.body);
             }
 
-            show() {
-                let pos = this.body.position;
-                this.body.angle = constrain(this.body.angle, -PI / 4, PI / 4);
-                let angle = this.body.angle;
+            class Word {
+                constructor(word, x, y, fontSize, color, textColor) {
+                    this.word = word;
+                    this.fontSize = fontSize;
+                    this.color = color;
+                    this.textColor = textColor;
 
-                push();
-                translate(pos.x, pos.y);
-                rotate(angle);
+                    sketch.textSize(this.fontSize);
+                    this.textWidth = sketch.textWidth(word);
 
-                rectMode(CENTER);
-                noStroke();
-                fill(this.color);
+                    const visualPaddingX = 30;
+                    const visualPaddingY = 10;
+                    const physicsPadding = 4;
 
-                const visualPaddingX = 30;
-                const visualPaddingY = 10;
-                rect(0, 0, this.textWidth + visualPaddingX, this.fontSize + visualPaddingY);
+                    const blockWidth = this.textWidth + visualPaddingX + physicsPadding;
+                    const blockHeight = this.fontSize + visualPaddingY + physicsPadding;
 
-                fill(this.textColor);
+                    this.body = Bodies.rectangle(x, y, blockWidth, blockHeight, {
+                        restitution: 0.05,
+                        friction: 0.35,
+                        angle: sketch.random(-sketch.PI / 4, sketch.PI / 4)
+                    });
+                    World.add(world, this.body);
+                }
 
-                textAlign(CENTER, CENTER);
-                textSize(this.fontSize);
-                text(this.word, 0, 5);
+                show(sketch) {
+                    let pos = this.body.position;
+                    this.body.angle = sketch.constrain(this.body.angle, -sketch.PI / 4, sketch.PI / 4);
+                    let angle = this.body.angle;
 
-                pop();
+                    sketch.push();
+                    sketch.translate(pos.x, pos.y);
+                    sketch.rotate(angle);
+
+                    sketch.rectMode(sketch.CENTER);
+                    sketch.noStroke();
+                    sketch.fill(this.color);
+
+                    const visualPaddingX = 30;
+                    const visualPaddingY = 10;
+                    sketch.rect(0, 0, this.textWidth + visualPaddingX, this.fontSize + visualPaddingY);
+
+                    sketch.fill(this.textColor);
+
+                    sketch.textAlign(sketch.CENTER, sketch.CENTER);
+                    sketch.textSize(this.fontSize);
+                    sketch.text(this.word, 0, 5);
+
+                    sketch.pop();
+                }
             }
-        }
+        };
+
+        let myp5 = new p5(s);
     </script>
+
+
 </body>
 
 </html>
