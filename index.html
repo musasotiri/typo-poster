@@ -34,6 +34,10 @@
             align-items: center;
         }
 
+        input:focus {
+            outline: none;
+        }
+
         #input-panel {
             width: 100%;
             max-width: 400px;
@@ -162,6 +166,20 @@
             opacity: 1;
         }
 
+        #success-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+            /* hide by default */
+            z-index: 20;
+            /* pastikan dia duduk atas canvas */
+            pointer-events: none;
+            /* supaya user masih boleh klik bawah */
+        }
+
+
         @media(max-width: 768px) {
             body {
                 flex-direction: column;
@@ -236,6 +254,22 @@
                     <path d="M3 3v5h5" />
                 </svg>
             </button>
+            <!-- overlay khusus untuk success -->
+            <!-- <div id="success-overlay">
+                <dotlottie-player src="assets/success.json" background="transparent" speed="1"
+                    style="width: 300px; height: 300px;"></dotlottie-player>
+            </div> -->
+            <div id="success-overlay" style="position:fixed; 
+            top:0; left:0; 
+            width:100vw; height:100vh; 
+            background:rgba(0,0,0,0); 
+            display:none; 
+            align-items:center; 
+            justify-content:center; 
+            z-index:9999;">
+                <div id="lottie-container" style="width:300px; height:300px;">
+                </div>
+            </div>
         </div>
     </div>
     <div class="right">
@@ -258,8 +292,25 @@
     </div>
     <div id="toast-message"></div>
 
+    <!-- Overlay container -->
+    <!-- <div id="lottie-overlay" style="position:fixed; 
+            top:0; left:0; 
+            width:100vw; height:100vh; 
+            background:rgba(0,0,0,0); 
+            display:none; 
+            align-items:center; 
+            justify-content:center; 
+            z-index:9999;">
+        <div id="lottie-container" style="width:300px; height:300px;">
+        </div>
+    </div> -->
+
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+
     <script>
         let Engine = Matter.Engine,
             World = Matter.World,
@@ -271,6 +322,8 @@
         let started = false;
         let lastMessage = "";
         let lastColors = {};
+
+        let anim;
 
         const lightColors = ['#f1faee', '#a8dadc'];
         const darkColors = ['#e63946', '#457b9d', '#1d3557'];
@@ -436,6 +489,8 @@
             const shareUrl = window.location.origin + window.location.pathname + '#' + encodedData;
 
             navigator.clipboard.writeText(shareUrl).then(() => {
+                showLottie();
+                // showSuccessOverlay();
                 showToast("Link copied!");
             }).catch(err => {
                 console.error("Failed to copy link:", err);
@@ -443,12 +498,46 @@
             });
         }
 
+        function showSuccessOverlay() {
+            const overlay = document.getElementById("success-overlay");
+            overlay.style.display = "block";
+
+            setTimeout(() => {
+                overlay.style.display = "none";
+            }, 4000); // auto hide after 2s
+        }
+
+
+        function showLottie() {
+            const overlay = document.getElementById('lottie-overlay');
+            overlay.style.display = 'flex'; // pakai flex supaya center
+
+            if (!anim) {
+                anim = lottie.loadAnimation({
+                    container: document.getElementById('lottie-container'),
+                    renderer: 'svg',
+                    loop: false,
+                    autoplay: true,
+                    path: 'assets/success.json'
+                });
+            } else {
+                anim.goToAndPlay(0, true);
+            }
+
+
+            setTimeout(() => {
+                overlay.style.display = 'none';
+            }, 4000);
+        }
+
+
+
         function showToast(message) {
             toastMessage.textContent = message;
             toastMessage.classList.add("show");
             setTimeout(() => {
                 toastMessage.classList.remove("show");
-            }, 3000);
+            }, 4000);
         }
 
         function setHighContrastColors() {
@@ -469,29 +558,43 @@
             };
         }
 
-        // 🔥 New font size calculation
+
         function calculateFontSize(parts) {
-            let baseFontSize = height * 0.25;
+            // Use the canvas diagonal as a robust reference for size
+            const diagonal = Math.sqrt(width * width + height * height);
 
+            // Initial font size is a proportion of the diagonal
+            let baseFontSize = diagonal * 0.1;
+
+            // Find the longest word to prevent overflow
+            const longestWord = parts.reduce((a, b) => a.length > b.length ? a : b, "");
             textSize(baseFontSize);
-            let longestWord = parts.reduce((a, b) => a.length > b.length ? a : b, "");
-            let maxWidth = width * 0.85;
-            let longestWidth = textWidth(longestWord);
+            const longestWidth = textWidth(longestWord);
 
+            // Adjust font size if the longest word is too wide
             let adjusted = baseFontSize;
-            if (longestWidth > maxWidth) {
-                adjusted *= (maxWidth / longestWidth);
+            if (longestWidth > width * 0.9) {
+                adjusted *= (width * 0.9 / longestWidth);
             }
 
-            let scalingFactor = 1 - (Math.log(parts.length) / 10);
-            scalingFactor = constrain(scalingFactor, 0.5, 1);
+            // Use a non-linear scaling factor based on the number of words.
+            // This creates a more gradual decrease than a linear map.
+            const numWords = parts.length;
+            const maxWordsForScaling = 25; // Define a new max to prevent excessive reduction
+            let scalingFactor = 1.0;
+
+            if (numWords > 1) {
+                const normalizedWordCount = Math.min(numWords, maxWordsForScaling) / maxWordsForScaling;
+                scalingFactor = Math.pow(1 - normalizedWordCount, 0.4); // The exponent controls the curve's steepness
+            }
             adjusted *= scalingFactor;
 
-            let minSize = height * 0.05;
+            const minSize = height * 0.05;
             adjusted = max(adjusted, minSize);
 
             return adjusted;
         }
+
 
         function createWords(msg, colors) {
             if (words.length > 0) {
@@ -510,14 +613,23 @@
 
             if (parts.length === 0) return;
 
+            // Check for word merging with length constraint
             if (parts.length > 7) {
                 let mergedParts = [];
                 let i = 0;
                 while (i < parts.length) {
                     const shouldMerge = random() < 0.5;
+                    // New condition: Only merge if the combined word width is less than 70% of the canvas width
                     if (shouldMerge && i + 1 < parts.length) {
-                        mergedParts.push(parts[i] + ' ' + parts[i + 1]);
-                        i += 2;
+                        const mergedText = parts[i] + ' ' + parts[i + 1];
+                        textSize(calculateFontSize(parts));
+                        if (textWidth(mergedText) < width * 0.6) {
+                            mergedParts.push(mergedText);
+                            i += 2;
+                        } else {
+                            mergedParts.push(parts[i]);
+                            i += 1;
+                        }
                     } else {
                         mergedParts.push(parts[i]);
                         i += 1;
@@ -564,8 +676,8 @@
                 const blockHeight = this.fontSize + visualPaddingY + physicsPadding;
 
                 this.body = Bodies.rectangle(x, y, blockWidth, blockHeight, {
-                    restitution: 0.2,
-                    friction: 0.8,
+                    restitution: 0.05, // bouncing
+                    friction: 0.35, // sticky - slippery
                     angle: random(-PI / 4, PI / 4)
                 });
                 World.add(world, this.body);
