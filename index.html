@@ -28,6 +28,7 @@
     <meta property="twitter:image" content="https://katakata.my/wp-content/uploads/2025/07/katakata-home1.png">
     <!-- letak preview image -->
 
+
     <style>
         body {
             margin: 0;
@@ -310,6 +311,10 @@
             }
         }
     </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
+
+
 </head>
 
 <body>
@@ -454,30 +459,25 @@
             });
         }
 
+        // Load Poster - decode + decompress
         function checkUrlAndLoadPoster() {
-            if (window.location.hash) {
+            if (window.location.hash.length > 1) {
                 try {
-                    const encodedData = window.location.hash.substring(1);
+                    const encodedData = decodeURIComponent(window.location.hash.substring(1));
+                    const jsonString = LZString.decompressFromEncodedURIComponent(encodedData);
 
-                    // 🔑 Decode Base64
-                    const decodedJsonString = decodeURIComponent(escape(atob(encodedData)));
-                    const data = JSON.parse(decodedJsonString);
-
-                    if (data && data.message && data.message.length > 0) {
-                        lastMessage = data.message;
-                        lastColors = data.colors;
-                        createWords(lastMessage, lastColors);
-                        started = true;
-                        shareButton.hidden = false;
-                    } else {
-                        loadDefaultPoster();
+                    if (!jsonString) {
+                        console.warn("Poster data invalid");
+                        return;
                     }
-                } catch (e) {
-                    console.error("Failed to decode URL data:", e);
-                    loadDefaultPoster();
+
+                    const posterData = JSON.parse(jsonString);
+                    if (posterData.message) {
+                        createWords(posterData.message, posterData.colors);
+                    }
+                } catch (error) {
+                    console.error("Error loading poster:", error);
                 }
-            } else {
-                loadDefaultPoster();
             }
         }
 
@@ -547,28 +547,28 @@
             }
         }
 
-        function sharePoster() {
-            if (!lastMessage || lastMessage.length === 0) {
-                showToast("Oops, kena generate poster dulu then boleh share 👍");
+        // Share Poster - compress + encode
+        function sharePoster(message, colors) {
+            if (!message || message.trim() === "") {
+                showToast("Sila generate poster dulu!");
                 return;
             }
 
-            const data = {
-                message: lastMessage,
-                colors: lastColors
-            };
-            const jsonString = JSON.stringify(data);
+            const posterData = { message, colors };
+            const jsonString = JSON.stringify(posterData);
 
-            // 🔑 Encode pakai Base64
-            const encodedData = btoa(unescape(encodeURIComponent(jsonString)));
-            const shareUrl = window.location.origin + window.location.pathname + '#' + encodedData;
+            // Compress safely for all browsers (Safari/iOS included)
+            const encodedData = LZString.compressToEncodedURIComponent(jsonString);
 
+            const shareUrl = `${window.location.origin}${window.location.pathname}#${encodedData}`;
+
+            // Copy link to clipboard
             navigator.clipboard.writeText(shareUrl).then(() => {
-                showSuccessOverlay();
-                showToast("Link dah copy, boleh paste & share 🚀");
+                showOverlay(); // animation lottie keluar
+                showToast("Link poster dah copy 👍 — boleh terus share!");
             }).catch(err => {
                 console.error("Failed to copy link:", err);
-                showToast("Alamak… link tak berjaya dicopy 😅 Cuba lagi.");
+                showToast("Gagal nak copy link 😔");
             });
         }
 
