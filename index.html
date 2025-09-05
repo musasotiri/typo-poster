@@ -56,6 +56,7 @@
             outline: none;
         }
 
+
         #input-panel {
             width: 100%;
             max-width: 400px;
@@ -96,14 +97,13 @@
             margin-left: 1.5rem;
         }
 
-        #generate-btn {
+        #delete-btn {
             position: absolute;
             right: 3px;
             top: 50%;
             transform: translateY(-50%);
             padding: 0.5rem;
-            background: #2176FF;
-            color: #fff;
+            background: white;
             border: none;
             border-radius: 999px;
             cursor: pointer;
@@ -111,20 +111,34 @@
             line-height: 0;
         }
 
-        #generate-btn[disabled] {
+        #delete-btn[disabled] {
             background: #ced4da;
             cursor: not-allowed;
         }
 
 
+        #refresh-btn {
+            background-color: #2176FF;
+            -webkit-backdrop-filter: blur(5px);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 0 7px 7px 0;
+            padding: 0.5rem;
+            cursor: pointer;
+            color: white;
+            position: absolute;
+            bottom: 20px;
+            right: -42px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
 
         #download-btn {
             background-color: transparent;
             padding: 0.5rem;
             cursor: pointer;
             position: absolute;
-            bottom: 51px;
-            right: -44px;
+            bottom: 70px;
+            right: -41px;
             border: none;
             outline: none;
         }
@@ -139,8 +153,8 @@
             padding: 0.5rem;
             cursor: pointer;
             position: absolute;
-            bottom: 98px;
-            right: -44px;
+            bottom: 105px;
+            right: -41px;
             border: none;
             outline: none;
         }
@@ -152,7 +166,6 @@
         #poster canvas {
             border-radius: 10px;
             box-shadow: 0 8px 16px rgba(52, 58, 64, 0.2);
-            border: 0.7px solid rgba(255, 255, 255, 0.5);
         }
 
         #logo-svg {
@@ -294,14 +307,20 @@
             }
 
 
+            #refresh-btn {
+                bottom: -41px;
+                right: 1rem;
+                border-radius: 0 0 7px 7px;
+            }
+
             #download-btn {
-                bottom: -43px;
-                right: 18rem;
+                bottom: -41px;
+                right: 4.5rem;
             }
 
             #share-btn {
-                bottom: -43px;
-                right: 15.2rem;
+                bottom: -41px;
+                right: 7rem;
             }
 
 
@@ -336,6 +355,14 @@
                     <path d="m7 10 5 5 5-5" />
                 </svg>
             </button>
+            <button id="refresh-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="lucide lucide-rotate-ccw-icon lucide-rotate-ccw">
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                    <path d="M3 3v5h5" />
+                </svg>
+            </button>
             <div id="success-overlay" class="overlay-center">
                 <dotlottie-player id="success-lottie" src="assets/success.lottie" background="transparent" speed="1"
                     style="width:300px;height:300px">
@@ -349,12 +376,12 @@
             <div id="input-and-controls">
                 <div id="input-container">
                     <input type="text" id="message" maxlength="140" placeholder="Tulis mesej power anda kat sini..." />
-                    <button id="generate-btn" disabled>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                            class="lucide lucide-arrow-right">
-                            <path d="M5 12h14" />
-                            <path d="m12 5 7 7-7 7" />
+                    <button id="delete-btn" disabled>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="#a9a9a9" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                            class="lucide lucide-x-icon lucide-x">
+                            <path d="M18 6 6 18" />
+                            <path d="m6 6 12 12" />
                         </svg>
                     </button>
                 </div>
@@ -377,14 +404,12 @@
 
             let engine, world;
             let words = [];
-            let inputField, generateButton, downloadButton, charCounter, shareButton, toastMessage;
+            let inputField, deleteButton, downloadButton, charCounter, shareButton, toastMessage, refreshButton;
             let started = false;
             let lastMessage = "";
             let lastColors = {};
 
             // --- NEW: Icon SVGs and state tracking variable ---
-            const arrowIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-right"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>`;
-            const refreshIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rotate-ccw"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /></svg>`;
             let hasGeneratedOnce = false;
 
             const lightColors = ['#f1faee', '#a8dadc'];
@@ -421,13 +446,15 @@
                 World.add(world, [ground, leftWall, rightWall]);
 
                 inputField = document.getElementById("message");
-                generateButton = document.getElementById("generate-btn");
+                deleteButton = document.getElementById("delete-btn");
+                refreshButton = document.getElementById("refresh-btn");
                 downloadButton = document.getElementById("download-btn");
                 charCounter = document.getElementById("char-counter");
                 shareButton = document.getElementById("share-btn");
                 toastMessage = document.getElementById("toast-message");
 
-                generateButton.addEventListener("click", generatePoster);
+                deleteButton.addEventListener("click", deleteMessage);
+                refreshButton.addEventListener("click", refreshPoster);
                 downloadButton.addEventListener("click", downloadPoster);
                 shareButton.addEventListener("click", sharePoster);
                 inputField.addEventListener("keypress", function (e) {
@@ -439,15 +466,13 @@
                     updateCharCount();
                     updateButtonState();
                     if (inputField.value.trim().length === 0) {
-                        generateButton.innerHTML = arrowIconSVG;
                         hasGeneratedOnce = false; // Reset state
                         shareButton.hidden = true;
-                    } else if (hasGeneratedOnce) {
-                        generateButton.innerHTML = refreshIconSVG;
                     }
                 });
 
                 checkUrlAndLoadPoster();
+                updateButtonState();
 
                 function downloadPoster() {
                     const filename = "katakata-gravity-poster";
@@ -535,12 +560,11 @@
 
                     // add shared message to the input field
                     inputField.value = posterData.message;
-                    // inputField.placeholder = posterData.message;
 
 
                     updateCharCount();
                     updateButtonState();
-                    generateButton.innerHTML = refreshIconSVG;
+
                     hasGeneratedOnce = true;
 
                     createWords(lastMessage, lastColors);
@@ -566,7 +590,13 @@
             }
 
             function updateButtonState() {
-                generateButton.disabled = inputField.value.trim().length === 0;
+                deleteButton.hidden = inputField.value.trim().length === 0;
+            }
+
+            function deleteMessage() {
+                inputField.value = "";
+                updateCharCount();
+                updateButtonState();
             }
 
             // --- MODIFIED: generatePoster function ---
@@ -585,7 +615,6 @@
                 if (!hasGeneratedOnce) {
                     hasGeneratedOnce = true;
                 }
-                generateButton.innerHTML = refreshIconSVG;
             }
 
             function refreshPoster() {
