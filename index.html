@@ -97,13 +97,13 @@
             margin-left: 1.5rem;
         }
 
-        #delete-btn {
+        #generate-btn {
             position: absolute;
             right: 3px;
             top: 50%;
             transform: translateY(-50%);
             padding: 0.5rem;
-            background: white;
+            background-color: #2176FF;
             border: none;
             border-radius: 999px;
             cursor: pointer;
@@ -305,7 +305,7 @@
 
             #refresh-btn {
                 bottom: -41px;
-                right: 1rem;
+                right: 7px;
                 border-radius: 0 0 7px 7px;
             }
 
@@ -372,12 +372,12 @@
             <div id="input-and-controls">
                 <div id="input-container">
                     <input type="text" id="message" maxlength="140" placeholder="Tulis mesej power anda kat sini..." />
-                    <button id="delete-btn">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                            stroke="#a9a9a9" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
-                            class="lucide lucide-x-icon lucide-x">
-                            <path d="M18 6 6 18" />
-                            <path d="m6 6 12 12" />
+                    <button id="generate-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="#f8f9fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="lucide lucide-arrow-right-icon lucide-arrow-right">
+                            <path d="M5 12h14" />
+                            <path d="m12 5 7 7-7 7" />
                         </svg>
                     </button>
                 </div>
@@ -400,7 +400,7 @@
 
             let engine, world;
             let words = [];
-            let inputField, deleteButton, downloadButton, charCounter, shareButton, toastMessage, refreshButton;
+            let inputField, generateButton, downloadButton, charCounter, shareButton, toastMessage, refreshButton;
             let started = false;
             let lastMessage = "";
             let lastColors = {};
@@ -442,14 +442,14 @@
                 World.add(world, [ground, leftWall, rightWall]);
 
                 inputField = document.getElementById("message");
-                deleteButton = document.getElementById("delete-btn");
+                generateButton = document.getElementById("generate-btn");
                 refreshButton = document.getElementById("refresh-btn");
                 downloadButton = document.getElementById("download-btn");
                 charCounter = document.getElementById("char-counter");
                 shareButton = document.getElementById("share-btn");
                 toastMessage = document.getElementById("toast-message");
 
-                deleteButton.addEventListener("click", deleteMessage);
+                generateButton.addEventListener("click", generatePoster);
                 refreshButton.addEventListener("click", refreshPoster);
                 downloadButton.addEventListener("click", downloadPoster);
                 shareButton.addEventListener("click", sharePoster);
@@ -586,7 +586,7 @@
             }
 
             function updateButtonState() {
-                deleteButton.hidden = inputField.value.trim().length === 0;
+                generateButton.hidden = inputField.value.trim().length === 0;
             }
 
             function deleteMessage() {
