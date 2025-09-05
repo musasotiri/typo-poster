@@ -529,6 +529,14 @@
 
                     lastMessage = posterData.message;
                     lastColors = posterData.colors;
+
+                    // add shared message to the input field
+                    inputField.value = posterData.message;
+                    updateCharCount();
+                    updateButtonState();
+                    generateButton.innerHTML = refreshIconSVG;
+                    hasGeneratedOnce = true;
+
                     createWords(lastMessage, lastColors);
                     started = true;
                     if (typeof inputPanel !== "undefined" && inputPanel) inputPanel.style.display = "none";
