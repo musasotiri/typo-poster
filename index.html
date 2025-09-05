@@ -116,20 +116,7 @@
             cursor: not-allowed;
         }
 
-        #refresh-btn {
-            background-color: white;
-            -webkit-backdrop-filter: blur(5px);
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 0;
-            padding: 0.5rem;
-            cursor: pointer;
-            color: #2176FF;
-            position: absolute;
-            bottom: 4px;
-            right: -44px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
+
 
         #download-btn {
             background-color: white;
@@ -166,7 +153,7 @@
         }
 
         #poster canvas {
-            border: 10px solid white;
+            border-radius: 10px;
             box-shadow: 0 8px 16px rgba(52, 58, 64, 0.2);
         }
 
@@ -294,16 +281,14 @@
                 width: 90%;
                 padding-bottom: 0.5rem;
                 margin-top: 3rem;
+                align-items: start;
             }
 
             #input-panel {
                 width: 100%;
             }
 
-            #refresh-btn {
-                bottom: -43px;
-                right: 0;
-            }
+
 
             #download-btn {
                 bottom: -43px;
@@ -366,14 +351,6 @@
                     <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
                 </svg>
             </button>
-            <button id="refresh-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                    class="lucide lucide-rotate-ccw">
-                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                    <path d="M3 3v5h5" />
-                </svg>
-            </button>
             <div id="success-overlay" class="overlay-center">
                 <dotlottie-player id="success-lottie" src="assets/success.lottie" background="transparent" speed="1"
                     style="width:300px;height:300px">
@@ -415,10 +392,15 @@
 
             let engine, world;
             let words = [];
-            let inputField, generateButton, refreshButton, downloadButton, charCounter, shareButton, toastMessage;
+            let inputField, generateButton, downloadButton, charCounter, shareButton, toastMessage;
             let started = false;
             let lastMessage = "";
             let lastColors = {};
+
+            // --- NEW: Icon SVGs and state tracking variable ---
+            const arrowIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-right"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>`;
+            const refreshIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rotate-ccw"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /></svg>`;
+            let hasGeneratedOnce = false;
 
             const lightColors = ['#f1faee', '#a8dadc'];
             const darkColors = ['#e63946', '#457b9d', '#1d3557'];
@@ -455,22 +437,29 @@
 
                 inputField = document.getElementById("message");
                 generateButton = document.getElementById("generate-btn");
-                refreshButton = document.getElementById("refresh-btn");
                 downloadButton = document.getElementById("download-btn");
                 charCounter = document.getElementById("char-counter");
                 shareButton = document.getElementById("share-btn");
                 toastMessage = document.getElementById("toast-message");
 
                 generateButton.addEventListener("click", generatePoster);
-                refreshButton.addEventListener("click", refreshPoster);
                 downloadButton.addEventListener("click", downloadPoster);
                 shareButton.addEventListener("click", sharePoster);
                 inputField.addEventListener("keypress", function (e) {
                     if (e.key === "Enter") generatePoster();
                 });
+
+                // --- MODIFIED: Input listener ---
                 inputField.addEventListener("input", function () {
                     updateCharCount();
                     updateButtonState();
+                    if (inputField.value.trim().length === 0) {
+                        generateButton.innerHTML = arrowIconSVG;
+                        hasGeneratedOnce = false; // Reset state
+                        shareButton.hidden = true;
+                    } else if (hasGeneratedOnce) {
+                        generateButton.innerHTML = refreshIconSVG;
+                    }
                 });
 
                 checkUrlAndLoadPoster();
@@ -578,15 +567,13 @@
 
             function updateCharCount() {
                 charCounter.textContent = `${inputField.value.length}/140`;
-                if (inputField.value.length === 0) {
-                    shareButton.hidden = true;
-                }
             }
 
             function updateButtonState() {
                 generateButton.disabled = inputField.value.trim().length === 0;
             }
 
+            // --- MODIFIED: generatePoster function ---
             function generatePoster() {
                 lastMessage = inputField.value.trim();
                 if (lastMessage.length === 0) return;
@@ -597,6 +584,12 @@
                 updateCharCount();
                 updateButtonState();
                 shareButton.hidden = false;
+
+                // Change icon to refresh and set state
+                if (!hasGeneratedOnce) {
+                    hasGeneratedOnce = true;
+                }
+                generateButton.innerHTML = refreshIconSVG;
             }
 
             function refreshPoster() {
