@@ -191,6 +191,7 @@
             animation: toastFadeOut 0.5s ease-in forwards;
         }
 
+
         @keyframes toastDrop {
             from {
                 opacity: 0;
@@ -214,6 +215,8 @@
                 transform: translate(-50%, 0);
             }
         }
+
+
 
         /* Overlay */
         #success-overlay {
@@ -532,6 +535,9 @@
 
                     // add shared message to the input field
                     inputField.value = posterData.message;
+                    // inputField.placeholder = posterData.message;
+
+
                     updateCharCount();
                     updateButtonState();
                     generateButton.innerHTML = refreshIconSVG;
