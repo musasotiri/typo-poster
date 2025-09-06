@@ -24,7 +24,7 @@
     <meta property="twitter:image" content="https://katakata.my/wp-content/uploads/2025/07/katakata-home1.png">
 
     <style>
-        body {
+        .grav-main {
             margin: 0;
             padding: 0;
             display: flex;
@@ -36,7 +36,7 @@
             position: relative;
         }
 
-        .left {
+        .grav-left {
             flex: 1;
             display: flex;
             justify-content: center;
@@ -45,7 +45,7 @@
             padding-top: 1rem;
         }
 
-        .right {
+        .grav-right {
             flex: 1;
             display: flex;
             justify-content: center;
@@ -57,7 +57,7 @@
         }
 
 
-        #input-panel {
+        #grav-input-panel {
             width: 100%;
             max-width: 400px;
             display: flex;
@@ -66,19 +66,19 @@
             gap: 1rem;
         }
 
-        #input-and-controls {
+        #grav-input-and-controls {
             display: flex;
             align-items: center;
             gap: 1rem;
             width: 100%;
         }
 
-        #input-container {
+        #grav-input-container {
             position: relative;
             flex-grow: 1;
         }
 
-        #message {
+        #grav-message {
             width: 100%;
             padding: 0.75rem 3.5rem 0.75rem 0.75rem;
             font-size: 1rem;
@@ -88,7 +88,7 @@
             font-family: inherit;
         }
 
-        #char-counter {
+        #grav-char-counter {
             width: 100%;
             text-align: left;
             font-size: 0.8rem;
@@ -97,7 +97,7 @@
             margin-left: 1.5rem;
         }
 
-        #generate-btn {
+        #grav-generate-btn {
             position: absolute;
             right: 3px;
             top: 50%;
@@ -113,7 +113,7 @@
 
 
 
-        #refresh-btn {
+        #grav-refresh-btn {
             background-color: #2176FF;
             -webkit-backdrop-filter: blur(5px);
             backdrop-filter: blur(5px);
@@ -128,7 +128,7 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
-        #download-btn {
+        #grav-download-btn {
             background-color: transparent;
             padding: 0.5rem;
             cursor: pointer;
@@ -139,12 +139,12 @@
             outline: none;
         }
 
-        #download-btn svg,
-        #share-btn svg {
+        #grav-download-btn svg,
+        #grav-share-btn svg {
             stroke: #4a5759;
         }
 
-        #share-btn {
+        #grav-share-btn {
             background-color: transparent;
             padding: 0.5rem;
             cursor: pointer;
@@ -155,16 +155,16 @@
             outline: none;
         }
 
-        #poster {
+        #grav-poster {
             position: relative;
         }
 
-        #poster canvas {
+        #grav-poster canvas {
             border-radius: 10px;
             box-shadow: 0 8px 16px rgba(52, 58, 64, 0.2);
         }
 
-        #logo-svg {
+        #grav-logo-svg {
             position: absolute;
             top: 10px;
             left: 7px;
@@ -174,7 +174,7 @@
             visibility: hidden;
         }
 
-        #toast-message {
+        #grav-toast-message {
             position: absolute;
             top: 70%;
             left: 50%;
@@ -191,12 +191,12 @@
         }
 
 
-        #toast-message.show {
+        #grav-toast-message.show {
             animation: toastDrop 0.3s ease-out forwards;
         }
 
 
-        #toast-message.hide {
+        #grav-toast-message.hide {
             animation: toastFadeOut 0.5s ease-in forwards;
         }
 
@@ -228,7 +228,7 @@
 
 
         /* Overlay */
-        #success-overlay {
+        #grav-success-overlay {
             position: fixed;
             top: 0;
             left: 0;
@@ -246,13 +246,13 @@
         }
 
         /* Active (intro) */
-        #success-overlay.show {
+        #grav-success-overlay.show {
             opacity: 1;
             visibility: visible;
         }
 
         /* Hide (outro) */
-        #success-overlay.hide {
+        #grav-success-overlay.hide {
             opacity: 0;
             visibility: hidden;
         }
@@ -280,7 +280,7 @@
                 align-items: center;
             }
 
-            #poster {
+            #grav-poster {
                 margin-top: 0.5rem;
             }
 
@@ -298,101 +298,126 @@
                 align-items: start;
             }
 
-            #input-panel {
+            #grav-input-panel {
                 width: 100%;
             }
 
 
-            #refresh-btn {
+            #grav-refresh-btn {
                 bottom: -41px;
                 right: 7px;
                 border-radius: 0 0 7px 7px;
             }
 
-            #download-btn {
+            #grav-download-btn {
                 bottom: -41px;
                 right: 4.5rem;
             }
 
-            #share-btn {
+            #grav-share-btn {
                 bottom: -41px;
                 right: 7rem;
             }
 
 
-            #success-overlay {
+            #grav-success-overlay {
                 top: -20%;
             }
 
-            #toast-message {
+            #grav-toast-message {
                 width: 65%;
             }
         }
     </style>
+
 </head>
 
 <body>
-    <div class="left">
-        <div id="poster">
-            <button id="share-btn" hidden>
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                    class="lucide lucide-link-icon lucide-link">
-                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-                </svg>
-            </button>
-            <button id="download-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"
-                    class="lucide lucide-download-icon lucide-download">
-                    <path d="M12 15V3" />
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <path d="m7 10 5 5 5-5" />
-                </svg>
-            </button>
-            <button id="refresh-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                    class="lucide lucide-rotate-ccw-icon lucide-rotate-ccw">
-                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                    <path d="M3 3v5h5" />
-                </svg>
-            </button>
-            <div id="success-overlay" class="overlay-center">
-                <dotlottie-player id="success-lottie" src="assets/success.lottie" background="transparent" speed="1"
-                    style="width:300px;height:300px">
-                </dotlottie-player>
-                <div id="toast-message"></div>
-            </div>
-        </div>
-    </div>
-    <div class="right">
-        <div id="input-panel">
-            <div id="input-and-controls">
-                <div id="input-container">
-                    <input type="text" id="message" maxlength="140" placeholder="Tulis mesej power anda kat sini..." />
-                    <button id="generate-btn">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                            stroke="#f8f9fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                            class="lucide lucide-arrow-right-icon lucide-arrow-right">
-                            <path d="M5 12h14" />
-                            <path d="m12 5 7 7-7 7" />
-                        </svg>
-                    </button>
+
+    <div class="grav-main">
+        <script>
+            // Dynamically load Supabase script if it's not loaded already
+            if (typeof supabase === 'undefined') {
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.11.0/dist/umd/supabase.js';
+                script.onload = () => {
+                    // Initialize Supabase after script loads
+                    const supabaseUrl = 'https://cafvwneulpuypprppknp.supabase.co'; // Replace with your Supabase URL
+                    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhZnZ3bmV1bHB1eXBwcnBwa25wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcxNjU5ODcsImV4cCI6MjA3Mjc0MTk4N30.m1jyJMdgg6o3MZZXanj0gNWQdmMVrhCy1y7scoLps_8'; // Replace with your Supabase anon key
+                    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+                    // Now you can call your sharePoster() function or any function that uses Supabase
+                    console.log('Supabase loaded dynamically:', supabase);
+                };
+                document.head.appendChild(script);
+            }
+        </script>
+        <div class="grav-left">
+            <div id="grav-poster">
+                <button id="grav-share-btn" hidden>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="lucide lucide-link-icon lucide-link">
+                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                    </svg>
+                </button>
+                <button id="grav-download-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"
+                        class="lucide lucide-download-icon lucide-download">
+                        <path d="M12 15V3" />
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <path d="m7 10 5 5 5-5" />
+                    </svg>
+                </button>
+                <button id="grav-refresh-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="lucide lucide-rotate-ccw-icon lucide-rotate-ccw">
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                        <path d="M3 3v5h5" />
+                    </svg>
+                </button>
+                <div id="grav-success-overlay" class="overlay-center">
+                    <dotlottie-player id="grav-success-lottie" src="assets/success.lottie" background="transparent"
+                        speed="1" style="width:300px;height:300px">
+                    </dotlottie-player>
+                    <div id="grav-toast-message"></div>
                 </div>
             </div>
-            <div id="char-counter">0/140</div>
+        </div>
+        <div class="grav-right">
+            <div id="grav-input-panel">
+                <div id="grav-input-and-controls">
+                    <div id="grav-input-container">
+                        <input type="text" id="grav-message" maxlength="140"
+                            placeholder="Tulis mesej power anda kat sini..." />
+                        <button id="grav-generate-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="#f8f9fa" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="lucide lucide-arrow-right-icon lucide-arrow-right">
+                                <path d="M5 12h14" />
+                                <path d="m12 5 7 7-7 7" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div id="grav-char-counter">0/140</div>
+            </div>
         </div>
     </div>
+
 
     <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <script type="module" src="https://unpkg.com/@dotlottie/player-component@latest/dist/dotlottie-player.js"></script>
 
+
     <script>
-        // This is the correct way to instantiate a p5 sketch
+
+
         const s = (sketch) => {
             let Engine = Matter.Engine,
                 World = Matter.World,
@@ -400,18 +425,25 @@
 
             let engine, world;
             let words = [];
-            let inputField, generateButton, downloadButton, charCounter, shareButton, toastMessage, refreshButton;
+            let gravinputField,
+                gravgenerateButton,
+                gravdownloadButton,
+                gravcharCounter,
+                gravshareButton,
+                gravtoastMessage,
+                gravrefreshButton;
             let started = false;
             let lastMessage = "";
             let lastColors = {};
 
+
             // --- NEW: Icon SVGs and state tracking variable ---
             let hasGeneratedOnce = false;
 
-            const lightColors = ['#f1faee', '#a8dadc'];
-            const darkColors = ['#e63946', '#457b9d', '#1d3557'];
-            const lightTextColor = '#1d3557';
-            const darkTextColor = '#f1faee';
+            const lightColors = ["#f1faee", "#a8dadc"];
+            const darkColors = ["#e63946", "#457b9d", "#1d3557"];
+            const lightTextColor = "#1d3557";
+            const darkTextColor = "#f1faee";
 
             let backgroundColor, wordColor, textColor;
 
@@ -419,8 +451,12 @@
                 let canvasWidth, canvasHeight;
                 const aspectRatio = Math.sqrt(2);
 
-                let viewportH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-                let viewportW = window.visualViewport ? window.visualViewport.width : window.innerWidth;
+                let viewportH = window.visualViewport
+                    ? window.visualViewport.height
+                    : window.innerHeight;
+                let viewportW = window.visualViewport
+                    ? window.visualViewport.width
+                    : window.innerWidth;
 
                 if (viewportW > viewportH) {
                     canvasHeight = viewportH * 0.9;
@@ -431,39 +467,57 @@
                 }
 
                 let canvas = sketch.createCanvas(canvasWidth, canvasHeight);
-                canvas.parent('poster');
+                canvas.parent("grav-poster");
                 engine = Engine.create();
                 world = engine.world;
                 Engine.run(engine);
 
-                let ground = Bodies.rectangle(sketch.width / 2, sketch.height + 50, sketch.width, 100, { isStatic: true });
-                let leftWall = Bodies.rectangle(-50, sketch.height / 2, 100, sketch.height, { isStatic: true });
-                let rightWall = Bodies.rectangle(sketch.width + 50, sketch.height / 2, 100, sketch.height, { isStatic: true });
+                let ground = Bodies.rectangle(
+                    sketch.width / 2,
+                    sketch.height + 50,
+                    sketch.width,
+                    100,
+                    { isStatic: true }
+                );
+                let leftWall = Bodies.rectangle(
+                    -50,
+                    sketch.height / 2,
+                    100,
+                    sketch.height,
+                    { isStatic: true }
+                );
+                let rightWall = Bodies.rectangle(
+                    sketch.width + 50,
+                    sketch.height / 2,
+                    100,
+                    sketch.height,
+                    { isStatic: true }
+                );
                 World.add(world, [ground, leftWall, rightWall]);
 
-                inputField = document.getElementById("message");
-                generateButton = document.getElementById("generate-btn");
-                refreshButton = document.getElementById("refresh-btn");
-                downloadButton = document.getElementById("download-btn");
-                charCounter = document.getElementById("char-counter");
-                shareButton = document.getElementById("share-btn");
-                toastMessage = document.getElementById("toast-message");
+                gravinputField = document.getElementById("grav-message");
+                gravgenerateButton = document.getElementById("grav-generate-btn");
+                gravrefreshButton = document.getElementById("grav-refresh-btn");
+                gravdownloadButton = document.getElementById("grav-download-btn");
+                gravcharCounter = document.getElementById("grav-char-counter");
+                gravshareButton = document.getElementById("grav-share-btn");
+                gravtoastMessage = document.getElementById("grav-toast-message");
 
-                generateButton.addEventListener("click", generatePoster);
-                refreshButton.addEventListener("click", refreshPoster);
-                downloadButton.addEventListener("click", downloadPoster);
-                shareButton.addEventListener("click", sharePoster);
-                inputField.addEventListener("keypress", function (e) {
+                gravgenerateButton.addEventListener("click", generatePoster);
+                gravrefreshButton.addEventListener("click", refreshPoster);
+                gravdownloadButton.addEventListener("click", downloadPoster);
+                gravshareButton.addEventListener("click", sharePoster);
+                gravinputField.addEventListener("keypress", function (e) {
                     if (e.key === "Enter") generatePoster();
                 });
 
                 // --- MODIFIED: Input listener ---
-                inputField.addEventListener("input", function () {
+                gravinputField.addEventListener("input", function () {
                     updateCharCount();
                     updateButtonState();
-                    if (inputField.value.trim().length === 0) {
+                    if (gravinputField.value.trim().length === 0) {
                         hasGeneratedOnce = false; // Reset state
-                        shareButton.hidden = true;
+                        gravshareButton.hidden = true;
                     }
                 });
 
@@ -472,20 +526,22 @@
 
                 function downloadPoster() {
                     const filename = "katakata-gravity-poster";
-                    const fileExtension = 'png';
+                    const fileExtension = "png";
 
                     sketch.saveCanvas(filename, fileExtension);
                 }
-
-
             };
 
             sketch.windowResized = function () {
                 let canvasWidth, canvasHeight;
                 const aspectRatio = Math.sqrt(2);
 
-                let viewportH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-                let viewportW = window.visualViewport ? window.visualViewport.width : window.innerWidth;
+                let viewportH = window.visualViewport
+                    ? window.visualViewport.height
+                    : window.innerHeight;
+                let viewportW = window.visualViewport
+                    ? window.visualViewport.width
+                    : window.innerWidth;
 
                 if (viewportW > viewportH) {
                     canvasHeight = viewportH * 0.9;
@@ -497,9 +553,27 @@
 
                 sketch.resizeCanvas(canvasWidth, canvasHeight);
                 World.clear(world, false);
-                let ground = Bodies.rectangle(sketch.width / 2, sketch.height + 50, sketch.width, 100, { isStatic: true });
-                let leftWall = Bodies.rectangle(-50, sketch.height / 2, 100, sketch.height, { isStatic: true });
-                let rightWall = Bodies.rectangle(sketch.width + 50, sketch.height / 2, 100, sketch.height, { isStatic: true });
+                let ground = Bodies.rectangle(
+                    sketch.width / 2,
+                    sketch.height + 50,
+                    sketch.width,
+                    100,
+                    { isStatic: true }
+                );
+                let leftWall = Bodies.rectangle(
+                    -50,
+                    sketch.height / 2,
+                    100,
+                    sketch.height,
+                    { isStatic: true }
+                );
+                let rightWall = Bodies.rectangle(
+                    sketch.width + 50,
+                    sketch.height / 2,
+                    100,
+                    sketch.height,
+                    { isStatic: true }
+                );
                 World.add(world, [ground, leftWall, rightWall]);
                 if (lastMessage.length > 0) {
                     createWords(lastMessage, lastColors);
@@ -547,7 +621,8 @@
 
                 if (posterData && posterData.message && posterData.message.length > 0) {
                     posterData.colors = posterData.colors || {};
-                    posterData.colors.backgroundColor = posterData.colors.backgroundColor || "#f1faee";
+                    posterData.colors.backgroundColor =
+                        posterData.colors.backgroundColor || "#f1faee";
                     posterData.colors.wordColor = posterData.colors.wordColor || "#1d3557";
                     posterData.colors.textColor = posterData.colors.textColor || "#f1faee";
 
@@ -555,8 +630,7 @@
                     lastColors = posterData.colors;
 
                     // add shared message to the input field
-                    inputField.value = posterData.message;
-
+                    gravinputField.value = posterData.message;
 
                     updateCharCount();
                     updateButtonState();
@@ -565,11 +639,14 @@
 
                     createWords(lastMessage, lastColors);
                     started = true;
-                    if (typeof inputPanel !== "undefined" && inputPanel) inputPanel.style.display = "none";
-                    if (typeof shareButton !== "undefined" && shareButton) shareButton.hidden = false;
-
+                    if (typeof gravinputPanel !== "undefined" && gravinputPanel)
+                        gravinputPanel.style.display = "none";
+                    if (typeof gravshareButton !== "undefined" && gravshareButton)
+                        gravshareButton.hidden = false;
                 } else {
-                    console.warn("No valid poster data found in URL; loading default poster.");
+                    console.warn(
+                        "No valid poster data found in URL; loading default poster."
+                    );
                     loadDefaultPoster();
                 }
             }
@@ -582,22 +659,22 @@
             }
 
             function updateCharCount() {
-                charCounter.textContent = `${inputField.value.length}/140`;
+                gravcharCounter.textContent = `${gravinputField.value.length}/140`;
             }
 
             function updateButtonState() {
-                generateButton.hidden = inputField.value.trim().length === 0;
+                gravgenerateButton.hidden = gravinputField.value.trim().length === 0;
             }
 
             function deleteMessage() {
-                inputField.value = "";
+                gravinputField.value = "";
                 updateCharCount();
                 updateButtonState();
             }
 
             // --- MODIFIED: generatePoster function ---
             function generatePoster() {
-                lastMessage = inputField.value.trim();
+                lastMessage = gravinputField.value.trim();
                 if (lastMessage.length === 0) return;
 
                 setHighContrastColors();
@@ -605,7 +682,7 @@
                 started = true;
                 updateCharCount();
                 updateButtonState();
-                shareButton.hidden = false;
+                gravshareButton.hidden = false;
 
                 // Change icon to refresh and set state
                 if (!hasGeneratedOnce) {
@@ -625,13 +702,15 @@
                 // You can name the file whatever you want
                 const filename = "katakata-poster";
                 // Choose your desired file format (e.g., 'png', 'jpg')
-                const fileExtension = 'png';
+                const fileExtension = "png";
 
                 // The p5.js function that saves the canvas content
                 sketch.saveCanvas(filename, fileExtension);
             }
 
             function sharePoster() {
+                console.log("function -> sharePoster");
+
                 if (!lastMessage || lastMessage.length === 0) {
                     showToast("Oops, kena generate poster dulu then boleh share 👍");
                     return;
@@ -639,30 +718,62 @@
 
                 const data = {
                     message: lastMessage,
-                    colors: lastColors
+                    colors: lastColors,
                 };
                 const jsonString = JSON.stringify(data);
 
                 const encodedData = LZString.compressToEncodedURIComponent(jsonString);
-                const shareUrl = window.location.origin + window.location.pathname + '#' + encodedData;
+                const shareUrl =
+                    window.location.origin + window.location.pathname + "#" + encodedData;
 
-                navigator.clipboard.writeText(shareUrl).then(() => {
-                    showSuccessOverlay();
-                    showToast("Link dah copy, boleh paste & share 🚀");
-                }).catch(err => {
-                    console.error("Failed to copy link:", err);
-                    showToast("Alamak… link tak berjaya dicopy 😅 Cuba lagi.");
-                });
+                navigator.clipboard
+                    .writeText(shareUrl)
+                    .then(() => {
+                        showSuccessOverlay();
+                        showToast("Link dah copy, boleh paste & share 🚀");
+
+                        // Now store the message in Supabase
+                        console.log("function -> sharePoster -> saveMessageToSupabase ");
+                        saveMessageToSupabase(data);
+                    })
+                    .catch((err) => {
+                        console.error("Failed to copy link:", err);
+                        showToast("Alamak… link tak berjaya dicopy 😅 Cuba lagi.");
+                    });
             }
 
+            // Function to store the message in Supabase
+            async function saveMessageToSupabase(data) {
+                console.log("function -> saveMessageToSupabase");
+                try {
+                    // Insert message data into Supabase
+                    const { error } = await supabase
+                        .from("poster_messages") // Make sure your table is named 'poster_messages'
+                        .insert([
+                            {
+                                message: data.message,
+                                // colors: data.colors || "", // Save colors if they exist
+                            },
+                        ]);
+
+                    if (error) {
+                        throw error;
+                    }
+
+                    console.log("Message successfully saved to Supabase!");
+                } catch (error) {
+                    console.error("Error saving message to Supabase:", error);
+                    showToast("Alamak… something went wrong with saving your message 😅");
+                }
+            }
             function showSuccessOverlay() {
-                const overlay = document.getElementById('success-overlay');
-                const anim = document.getElementById('success-lottie');
+                const overlay = document.getElementById("grav-success-overlay");
+                const anim = document.getElementById("grav-success-lottie");
 
                 overlay.classList.remove("hide");
                 overlay.classList.add("show");
 
-                overlay.style.display = 'flex';
+                overlay.style.display = "flex";
                 anim.seek(0);
                 anim.play();
                 setTimeout(() => {
@@ -672,10 +783,10 @@
             }
 
             function showToast(message) {
-                toastMessage.textContent = message;
-                toastMessage.classList.add("show");
+                gravtoastMessage.textContent = message;
+                gravtoastMessage.classList.add("show");
                 setTimeout(() => {
-                    toastMessage.classList.remove("show");
+                    gravtoastMessage.classList.remove("show");
                 }, 4000);
             }
 
@@ -695,21 +806,26 @@
                 lastColors = {
                     backgroundColor: backgroundColor,
                     wordColor: wordColor,
-                    textColor: textColor
+                    textColor: textColor,
                 };
             }
 
             function calculateFontSize(parts) {
-                const diagonal = sketch.sqrt(sketch.width * sketch.width + sketch.height * sketch.height);
+                const diagonal = sketch.sqrt(
+                    sketch.width * sketch.width + sketch.height * sketch.height
+                );
                 let baseFontSize = diagonal * 0.1;
 
-                const longestWord = parts.reduce((a, b) => a.length > b.length ? a : b, "");
+                const longestWord = parts.reduce(
+                    (a, b) => (a.length > b.length ? a : b),
+                    ""
+                );
                 sketch.textSize(baseFontSize);
                 const longestWidth = sketch.textWidth(longestWord);
 
                 let adjusted = baseFontSize;
                 if (longestWidth > sketch.width * 0.9) {
-                    adjusted *= (sketch.width * 0.9 / longestWidth);
+                    adjusted *= (sketch.width * 0.9) / longestWidth;
                 }
 
                 const numWords = parts.length;
@@ -717,7 +833,8 @@
                 let scalingFactor = 1.0;
 
                 if (numWords > 1) {
-                    const normalizedWordCount = sketch.min(numWords, maxWordsForScaling) / maxWordsForScaling;
+                    const normalizedWordCount =
+                        sketch.min(numWords, maxWordsForScaling) / maxWordsForScaling;
                     scalingFactor = sketch.pow(1 - normalizedWordCount, 0.4);
                 }
                 adjusted *= scalingFactor;
@@ -740,7 +857,7 @@
                 wordColor = colors.wordColor;
                 textColor = colors.textColor;
 
-                const processedMsg = msg.replace(/([.,!?;:])(?=\S)/g, '$1 ');
+                const processedMsg = msg.replace(/([.,!?;:])(?=\S)/g, "$1 ");
                 let parts = processedMsg.trim().split(/\s+/).filter(Boolean);
 
                 if (parts.length === 0) return;
@@ -751,7 +868,7 @@
                     while (i < parts.length) {
                         const shouldMerge = sketch.random() < 0.5;
                         if (shouldMerge && i + 1 < parts.length) {
-                            const mergedText = parts[i] + ' ' + parts[i + 1];
+                            const mergedText = parts[i] + " " + parts[i + 1];
                             sketch.textSize(calculateFontSize(parts));
                             if (sketch.textWidth(mergedText) < sketch.width * 0.6) {
                                 mergedParts.push(mergedText);
@@ -768,7 +885,7 @@
                     parts = mergedParts;
                 }
 
-                parts = parts.map(word => word.toUpperCase());
+                parts = parts.map((word) => word.toUpperCase());
 
                 let adjustedFontSize = calculateFontSize(parts);
 
@@ -799,14 +916,18 @@
                     this.body = Bodies.rectangle(x, y, blockWidth, blockHeight, {
                         restitution: 0.05,
                         friction: 0.35,
-                        angle: sketch.random(-sketch.PI / 4, sketch.PI / 4)
+                        angle: sketch.random(-sketch.PI / 4, sketch.PI / 4),
                     });
                     World.add(world, this.body);
                 }
 
                 show() {
                     let pos = this.body.position;
-                    this.body.angle = sketch.constrain(this.body.angle, -sketch.PI / 4, sketch.PI / 4);
+                    this.body.angle = sketch.constrain(
+                        this.body.angle,
+                        -sketch.PI / 4,
+                        sketch.PI / 4
+                    );
                     let angle = this.body.angle;
 
                     sketch.push();
@@ -819,7 +940,12 @@
 
                     const visualPaddingX = 30;
                     const visualPaddingY = 10;
-                    sketch.rect(0, 0, this.textWidth + visualPaddingX, this.fontSize + visualPaddingY);
+                    sketch.rect(
+                        0,
+                        0,
+                        this.textWidth + visualPaddingX,
+                        this.fontSize + visualPaddingY
+                    );
 
                     sketch.fill(this.textColor);
 
@@ -845,6 +971,7 @@
         };
 
         let myp5 = new p5(s);
+
     </script>
 
 
